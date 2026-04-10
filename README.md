@@ -13,6 +13,8 @@ A lightweight Windows desktop toy project built with only VS Code and the .NET S
 
 ### [2026-04-10]
 
+- **Window Opacity Slider**: Added a slider to the top panel to adjust window transparency from 20% to 100%, preventing the window from becoming fully invisible and unclickable.
+- **System Tray Minimize**: Minimizing the window now hides it from the taskbar and places it in the system tray (notification area). Double-clicking the tray icon restores the window. Right-clicking shows a context menu with **열기** (Restore) and **종료** (Exit) options. Uses `System.Windows.Forms.NotifyIcon` via `UseWindowsForms` in the project file.
 - **Keyboard Shortcuts**: Added `Ctrl+N` (new document), `Ctrl+O` (open file), and `Ctrl+S` (save file) via WPF `CommandBindings`.
 - **Word Wrap Toggle**: Added a "자동 줄바꿈" checkbox to the top panel that toggles `TextWrapping` on the main text area.
 - **Font Size via Ctrl+Wheel**: Holding `Ctrl` and scrolling the mouse wheel over the text area increases or decreases the font size (clamped between 8 and 72).
