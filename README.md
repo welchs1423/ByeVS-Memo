@@ -13,6 +13,9 @@ A lightweight Windows desktop toy project built with only VS Code and the .NET S
 
 ### [2026-04-10]
 
+- **Print (Ctrl+P)**: Added print support via `ApplicationCommands.Print` binding. Invokes `PrintDialog` and renders the current text into a `FlowDocument` fitted to the printer's printable area (50 px padding). Wrapped in `try-catch` to gracefully handle printer errors without crashing the app.
+- **Document Statistics**: Added a `통계` button to the top panel. Clicking it displays a `MessageBox` with three metrics: total word count (split on whitespace/tab/newline), UTF-8 byte size (1 byte per ASCII char, 3 bytes per Korean character), and logical line count.
+
 - **Status Bar**: Added a bottom status bar (Row 2 of `MainGrid`) that displays three live-updated items on the right side: current cursor position (줄/칸), total character count, and a real-time clock (HH:mm:ss). Updated via `SelectionChanged` and `TextChanged` events; the clock uses a 1-second `DispatcherTimer`.
 - **Always-on-Top Toggle**: Added a 📌 `ToggleButton` to the top panel. Clicking it sets `Window.Topmost` to `true`/`false`, keeping the window pinned above all others while active.
 - **Auto-Save**: A 1-minute `DispatcherTimer` silently saves the current text to `autosave_temp.txt` in the application folder using `await Task.Run(...)` to avoid UI freezing. Both timers are stopped on window close.
@@ -22,6 +25,8 @@ A lightweight Windows desktop toy project built with only VS Code and the .NET S
 - **Keyboard Shortcuts**: Added `Ctrl+N` (new document), `Ctrl+O` (open file), and `Ctrl+S` (save file) via WPF `CommandBindings`.
 - **Word Wrap Toggle**: Added a word wrap checkbox to the top panel that toggles `TextWrapping` on the main text area.
 - **Font Size via Ctrl+Wheel**: Holding `Ctrl` and scrolling the mouse wheel over the text area increases or decreases the font size (clamped between 8 and 72).
+- **Find & Replace Panel**: Added a collapsible search bar above the text area. `Ctrl+F` opens find-only mode; `Ctrl+H` opens find-and-replace mode; pressing the same shortcut again or clicking **닫기** collapses the panel. Supports **다음 찾기** (case-insensitive, wraps around), **바꾸기** (replaces current match then advances), and **모두 바꾸기** (replaces all occurrences with a count notification). `Enter` in either input field triggers the action; `Esc` closes the panel. Panel colors adapt to dark/light theme via `ApplySearchPanelTheme()`.
+- **Focus Mode (F11)**: Pressing `F11` collapses the top toolbar and status bar, and switches the window to borderless full-screen (`WindowStyle=None`, `WindowState=Maximized`), leaving only the text area visible. Pressing `F11` or `Esc` restores the previous window state and UI panels.
 
 ### [2026-03-22]
 

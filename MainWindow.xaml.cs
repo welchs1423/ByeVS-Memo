@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -18,6 +19,11 @@ namespace ByeVS_Memo
         private bool isDarkMode = false;
         private readonly DispatcherTimer _clockTimer;
         private readonly DispatcherTimer _autoSaveTimer;
+
+        // 몰입 모드 상태
+        private bool _isFocusMode = false;
+        private WindowState _prevWindowState = WindowState.Normal;
+        private WindowStyle _prevWindowStyle = WindowStyle.SingleBorderWindow;
 
         // 시스템 트레이 아이콘
         private System.Windows.Forms.NotifyIcon _notifyIcon = null!;
@@ -67,6 +73,7 @@ namespace ByeVS_Memo
                 }
             }
 
+            ApplySearchPanelTheme(isDarkMode);
             RefreshRecentFilesMenu();
 
             // 시계 타이머 (1초 간격)
@@ -87,6 +94,56 @@ namespace ByeVS_Memo
         private void NewCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
             MainTextBox.Text = string.Empty;
+        }
+
+        // [인쇄] Ctrl+P
+        private void PrintCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            try
+            {
+                var printDialog = new PrintDialog();
+                if (printDialog.ShowDialog() == true)
+                {
+                    var doc = new System.Windows.Documents.FlowDocument(
+                        new System.Windows.Documents.Paragraph(
+                            new System.Windows.Documents.Run(MainTextBox.Text)));
+                    doc.PageWidth = printDialog.PrintableAreaWidth;
+                    doc.PageHeight = printDialog.PrintableAreaHeight;
+                    doc.PagePadding = new Thickness(50);
+                    doc.ColumnWidth = printDialog.PrintableAreaWidth;
+                    printDialog.PrintDocument(
+                        ((System.Windows.Documents.IDocumentPaginatorSource)doc).DocumentPaginator,
+                        "ByeVS-Memo 문서");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"인쇄 중 오류가 발생했습니다:\n{ex.Message}", "인쇄 오류",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        // [통계] 버튼
+        private void StatsButton_Click(object sender, RoutedEventArgs e)
+        {
+            string text = MainTextBox.Text;
+
+            // 단어 수 (공백·탭·줄바꿈 기준)
+            int wordCount = string.IsNullOrWhiteSpace(text)
+                ? 0
+                : text.Split(new char[] { ' ', '\t', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries).Length;
+
+            // 바이트 크기 (UTF-8: 영문 1B, 한글 3B)
+            int byteCount = System.Text.Encoding.UTF8.GetByteCount(text);
+
+            // 줄 수 (논리 줄 기준)
+            int lineCount = text.Length == 0 ? 1 : text.Split('\n').Length;
+
+            MessageBox.Show(
+                $"단어 수: {wordCount}\n바이트 크기 (UTF-8): {byteCount} Bytes\n줄 수: {lineCount}",
+                "문서 통계",
+                MessageBoxButton.OK,
+                MessageBoxImage.Information);
         }
 
         // [열기] Ctrl+O
@@ -224,6 +281,7 @@ namespace ByeVS_Memo
                 ClockText.Foreground = new SolidColorBrush(Colors.Black);
             }
 
+            ApplySearchPanelTheme(isDarkMode);
             string currentTheme = isDarkMode ? "Dark" : "Light";
             File.WriteAllText("theme_setting.txt", currentTheme);
         }
@@ -260,13 +318,52 @@ namespace ByeVS_Memo
 
         protected override void OnStateChanged(EventArgs e)
         {
-            if (WindowState == WindowState.Minimized)
+            if (WindowState == WindowState.Minimized && !_isFocusMode)
             {
                 Hide();
                 ShowInTaskbar = false;
                 _notifyIcon.Visible = true;
             }
             base.OnStateChanged(e);
+        }
+
+        // ── 몰입 모드 (F11 / Esc) ────────────────────────────────────
+        private void Window_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.F11)
+            {
+                ToggleFocusMode();
+                e.Handled = true;
+            }
+            else if (e.Key == Key.Escape && _isFocusMode)
+            {
+                ToggleFocusMode();
+                e.Handled = true;
+            }
+        }
+
+        private void ToggleFocusMode()
+        {
+            _isFocusMode = !_isFocusMode;
+
+            if (_isFocusMode)
+            {
+                _prevWindowState = WindowState;
+                _prevWindowStyle = WindowStyle;
+
+                TopPanelContainer.Visibility = Visibility.Collapsed;
+                MainStatusBar.Visibility = Visibility.Collapsed;
+                WindowStyle = WindowStyle.None;
+                WindowState = WindowState.Maximized;
+                MainTextBox.Focus();
+            }
+            else
+            {
+                TopPanelContainer.Visibility = Visibility.Visible;
+                MainStatusBar.Visibility = Visibility.Visible;
+                WindowStyle = _prevWindowStyle;
+                WindowState = _prevWindowState;
+            }
         }
 
         private void RestoreFromTray()
@@ -331,6 +428,181 @@ namespace ByeVS_Memo
             string content = MainTextBox.Text;
             string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "autosave_temp.txt");
             await Task.Run(() => File.WriteAllText(path, content));
+        }
+
+        // ── 찾기 및 바꾸기 ───────────────────────────────────────────
+        private void ApplySearchPanelTheme(bool dark)
+        {
+            if (dark)
+            {
+                SearchPanel.Background = new SolidColorBrush(Color.FromRgb(45, 45, 48));
+                SearchPanel.BorderBrush = new SolidColorBrush(Color.FromRgb(60, 60, 60));
+                FindLabel.Foreground = new SolidColorBrush(Colors.White);
+                ReplaceLabel.Foreground = new SolidColorBrush(Colors.White);
+                SearchStatusText.Foreground = new SolidColorBrush(Color.FromRgb(160, 160, 160));
+                FindTextBox.Background = new SolidColorBrush(Color.FromRgb(30, 30, 30));
+                FindTextBox.Foreground = new SolidColorBrush(Colors.White);
+                FindTextBox.CaretBrush = new SolidColorBrush(Colors.White);
+                ReplaceTextBox.Background = new SolidColorBrush(Color.FromRgb(30, 30, 30));
+                ReplaceTextBox.Foreground = new SolidColorBrush(Colors.White);
+                ReplaceTextBox.CaretBrush = new SolidColorBrush(Colors.White);
+            }
+            else
+            {
+                SearchPanel.Background = new SolidColorBrush(Color.FromRgb(240, 240, 240));
+                SearchPanel.BorderBrush = new SolidColorBrush(Color.FromRgb(200, 200, 200));
+                FindLabel.Foreground = new SolidColorBrush(Colors.Black);
+                ReplaceLabel.Foreground = new SolidColorBrush(Colors.Black);
+                SearchStatusText.Foreground = new SolidColorBrush(Color.FromRgb(100, 100, 100));
+                FindTextBox.Background = new SolidColorBrush(Colors.White);
+                FindTextBox.Foreground = new SolidColorBrush(Colors.Black);
+                FindTextBox.CaretBrush = new SolidColorBrush(Colors.Black);
+                ReplaceTextBox.Background = new SolidColorBrush(Colors.White);
+                ReplaceTextBox.Foreground = new SolidColorBrush(Colors.Black);
+                ReplaceTextBox.CaretBrush = new SolidColorBrush(Colors.Black);
+            }
+        }
+
+        private void ToggleSearchPanel(bool showReplace)
+        {
+            bool isOpen = SearchPanel.Visibility == Visibility.Visible;
+            bool isReplaceMode = ReplaceLabel.Visibility == Visibility.Visible;
+
+            if (isOpen && isReplaceMode == showReplace)
+            {
+                SearchPanel.Visibility = Visibility.Collapsed;
+                MainTextBox.Focus();
+                return;
+            }
+
+            SearchPanel.Visibility = Visibility.Visible;
+            Visibility replaceVis = showReplace ? Visibility.Visible : Visibility.Collapsed;
+            ReplaceLabel.Visibility = replaceVis;
+            ReplaceTextBox.Visibility = replaceVis;
+            ReplaceButton.Visibility = replaceVis;
+            ReplaceAllButton.Visibility = replaceVis;
+
+            FindTextBox.Focus();
+            FindTextBox.SelectAll();
+            SearchStatusText.Text = string.Empty;
+        }
+
+        protected override void OnPreviewKeyDown(KeyEventArgs e)
+        {
+            if (e.KeyboardDevice.Modifiers == ModifierKeys.Control)
+            {
+                if (e.Key == Key.F)
+                {
+                    ToggleSearchPanel(showReplace: false);
+                    e.Handled = true;
+                }
+                else if (e.Key == Key.H)
+                {
+                    ToggleSearchPanel(showReplace: true);
+                    e.Handled = true;
+                }
+            }
+            base.OnPreviewKeyDown(e);
+        }
+
+        private void FindTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter) { FindNext_Click(sender, e); e.Handled = true; }
+            else if (e.Key == Key.Escape) { CloseSearch_Click(sender, e); e.Handled = true; }
+        }
+
+        private void ReplaceTextBox_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key == Key.Enter) { Replace_Click(sender, e); e.Handled = true; }
+            else if (e.Key == Key.Escape) { CloseSearch_Click(sender, e); e.Handled = true; }
+        }
+
+        private void FindNext_Click(object sender, RoutedEventArgs e)
+        {
+            string searchText = FindTextBox.Text;
+            if (string.IsNullOrEmpty(searchText)) return;
+
+            string content = MainTextBox.Text;
+            int startIndex = MainTextBox.SelectionStart + MainTextBox.SelectionLength;
+            int found = content.IndexOf(searchText, startIndex, StringComparison.OrdinalIgnoreCase);
+            bool wrapped = false;
+
+            if (found < 0 && startIndex > 0)
+            {
+                found = content.IndexOf(searchText, 0, StringComparison.OrdinalIgnoreCase);
+                wrapped = found >= 0;
+            }
+
+            if (found >= 0)
+            {
+                MainTextBox.Focus();
+                MainTextBox.Select(found, searchText.Length);
+                int lineIdx = MainTextBox.GetLineIndexFromCharacterIndex(found);
+                if (lineIdx >= 0) MainTextBox.ScrollToLine(lineIdx);
+                SearchStatusText.Text = wrapped ? "(처음부터 다시 검색)" : string.Empty;
+            }
+            else
+            {
+                SearchStatusText.Text = "찾을 수 없음";
+            }
+        }
+
+        private void Replace_Click(object sender, RoutedEventArgs e)
+        {
+            string searchText = FindTextBox.Text;
+            string replaceText = ReplaceTextBox.Text;
+            if (string.IsNullOrEmpty(searchText)) return;
+
+            if (string.Equals(MainTextBox.SelectedText, searchText, StringComparison.OrdinalIgnoreCase))
+            {
+                int selStart = MainTextBox.SelectionStart;
+                MainTextBox.SelectedText = replaceText;
+                MainTextBox.SelectionStart = selStart + replaceText.Length;
+                MainTextBox.SelectionLength = 0;
+            }
+            FindNext_Click(sender, e);
+        }
+
+        private void ReplaceAll_Click(object sender, RoutedEventArgs e)
+        {
+            string searchText = FindTextBox.Text;
+            string replaceText = ReplaceTextBox.Text;
+            if (string.IsNullOrEmpty(searchText)) return;
+
+            string original = MainTextBox.Text;
+            int count = 0;
+            var sb = new StringBuilder();
+            int idx = 0;
+
+            while (idx <= original.Length)
+            {
+                int found = original.IndexOf(searchText, idx, StringComparison.OrdinalIgnoreCase);
+                if (found < 0)
+                {
+                    sb.Append(original, idx, original.Length - idx);
+                    break;
+                }
+                sb.Append(original, idx, found - idx);
+                sb.Append(replaceText);
+                idx = found + searchText.Length;
+                count++;
+            }
+
+            if (count > 0)
+            {
+                MainTextBox.Text = sb.ToString();
+                SearchStatusText.Text = $"{count}개 바꿨습니다";
+            }
+            else
+            {
+                SearchStatusText.Text = "찾을 수 없음";
+            }
+        }
+
+        private void CloseSearch_Click(object sender, RoutedEventArgs e)
+        {
+            SearchPanel.Visibility = Visibility.Collapsed;
+            MainTextBox.Focus();
         }
     }
 } // ★수정됨: 네임스페이스 닫는 중괄호

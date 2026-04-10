@@ -3,7 +3,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="ByeVS-Memo"
         Height="450"
-        Width="800">
+        Width="800"
+        KeyDown="Window_KeyDown">
         <Window.CommandBindings>
                 <CommandBinding Command="ApplicationCommands.New"
                                 Executed="NewCommand_Executed"/>
@@ -11,6 +12,8 @@
                                 Executed="OpenCommand_Executed"/>
                 <CommandBinding Command="ApplicationCommands.Save"
                                 Executed="SaveCommand_Executed"/>
+                <CommandBinding Command="ApplicationCommands.Print"
+                                Executed="PrintCommand_Executed"/>
         </Window.CommandBindings>
         <Grid x:Name="MainGrid">
                 <Grid.RowDefinitions>
@@ -19,7 +22,8 @@
                         <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
-                <Grid Grid.Row="0"
+                <Grid x:Name="TopPanelContainer"
+                      Grid.Row="0"
                       Margin="5,5,5,0">
                         <Grid.RowDefinitions>
                                 <RowDefinition Height="Auto"/>
@@ -47,6 +51,12 @@
                                         Margin="0,0,5,5"
                                         Width="60"
                                         Height="25"/>
+                                <Button Content="통계"
+                                        Click="StatsButton_Click"
+                                        Margin="0,0,5,5"
+                                        Width="60"
+                                        Height="25"
+                                        ToolTip="문서 통계 보기"/>
                                 <Button x:Name="ThemeButton"
                                         Content="다크 모드"
                                         Click="ThemeButton_Click"
@@ -83,20 +93,90 @@
                         </StackPanel>
                 </Grid>
 
-                <TextBox x:Name="MainTextBox"
-                         Grid.Row="1"
-                         AcceptsReturn="True"
-                         AcceptsTab="True"
-                         VerticalScrollBarVisibility="Auto"
-                         FontSize="15"
-                         Padding="10"
-                         BorderThickness="0"
-                         PreviewMouseWheel="MainTextBox_PreviewMouseWheel"
-                         SelectionChanged="MainTextBox_SelectionChanged"
-                         TextChanged="MainTextBox_TextChanged"/>
+                <Grid Grid.Row="1">
+                        <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto"/>
+                                <RowDefinition Height="*"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- 검색/바꾸기 패널 -->
+                        <Border x:Name="SearchPanel"
+                                Grid.Row="0"
+                                Visibility="Collapsed"
+                                BorderThickness="0,1,0,1"
+                                BorderBrush="#CCCCCC"
+                                Padding="5,4"
+                                Background="#F0F0F0">
+                                <StackPanel Orientation="Horizontal"
+                                            VerticalAlignment="Center">
+                                        <TextBlock x:Name="FindLabel"
+                                                   Text="찾기:"
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,4,0"/>
+                                        <TextBox x:Name="FindTextBox"
+                                                 Width="150"
+                                                 Height="22"
+                                                 VerticalContentAlignment="Center"
+                                                 Margin="0,0,6,0"
+                                                 KeyDown="FindTextBox_KeyDown"/>
+                                        <TextBlock x:Name="ReplaceLabel"
+                                                   Text="바꾸기:"
+                                                   VerticalAlignment="Center"
+                                                   Margin="0,0,4,0"
+                                                   Visibility="Collapsed"/>
+                                        <TextBox x:Name="ReplaceTextBox"
+                                                 Width="150"
+                                                 Height="22"
+                                                 VerticalContentAlignment="Center"
+                                                 Margin="0,0,6,0"
+                                                 Visibility="Collapsed"
+                                                 KeyDown="ReplaceTextBox_KeyDown"/>
+                                        <Button Content="다음 찾기"
+                                                Height="22"
+                                                Padding="6,0"
+                                                Margin="0,0,3,0"
+                                                Click="FindNext_Click"/>
+                                        <Button x:Name="ReplaceButton"
+                                                Content="바꾸기"
+                                                Height="22"
+                                                Padding="6,0"
+                                                Margin="0,0,3,0"
+                                                Visibility="Collapsed"
+                                                Click="Replace_Click"/>
+                                        <Button x:Name="ReplaceAllButton"
+                                                Content="모두 바꾸기"
+                                                Height="22"
+                                                Padding="6,0"
+                                                Margin="0,0,3,0"
+                                                Visibility="Collapsed"
+                                                Click="ReplaceAll_Click"/>
+                                        <Button Content="닫기"
+                                                Height="22"
+                                                Padding="6,0"
+                                                Click="CloseSearch_Click"/>
+                                        <TextBlock x:Name="SearchStatusText"
+                                                   VerticalAlignment="Center"
+                                                   Margin="8,0,0,0"
+                                                   Foreground="#888888"
+                                                   FontSize="11"/>
+                                </StackPanel>
+                        </Border>
+
+                        <TextBox x:Name="MainTextBox"
+                                 Grid.Row="1"
+                                 AcceptsReturn="True"
+                                 AcceptsTab="True"
+                                 VerticalScrollBarVisibility="Auto"
+                                 FontSize="15"
+                                 Padding="10"
+                                 BorderThickness="0"
+                                 PreviewMouseWheel="MainTextBox_PreviewMouseWheel"
+                                 SelectionChanged="MainTextBox_SelectionChanged"
+                                 TextChanged="MainTextBox_TextChanged"/>
+                </Grid>
 
                 <StatusBar x:Name="MainStatusBar"
-                                Grid.Row="2">
+                           Grid.Row="2">
                         <StatusBar.ItemsPanel>
                                 <ItemsPanelTemplate>
                                         <DockPanel LastChildFill="True"/>
@@ -104,18 +184,18 @@
                         </StatusBar.ItemsPanel>
                         <StatusBarItem DockPanel.Dock="Right">
                                 <TextBlock x:Name="ClockText"
-                                                Text="00:00:00"
-                                                Margin="10,0,5,0"/>
+                                           Text="00:00:00"
+                                           Margin="10,0,5,0"/>
                         </StatusBarItem>
                         <StatusBarItem DockPanel.Dock="Right">
                                 <TextBlock x:Name="CharCountText"
-                                                Text="글자 수: 0"
-                                                Margin="10,0,0,0"/>
+                                           Text="글자 수: 0"
+                                           Margin="10,0,0,0"/>
                         </StatusBarItem>
                         <StatusBarItem DockPanel.Dock="Right">
                                 <TextBlock x:Name="CursorPosText"
-                                                Text="줄: 1, 칸: 1"
-                                                Margin="10,0,0,0"/>
+                                           Text="줄: 1, 칸: 1"
+                                           Margin="10,0,0,0"/>
                         </StatusBarItem>
                         <StatusBarItem/>
                 </StatusBar>
