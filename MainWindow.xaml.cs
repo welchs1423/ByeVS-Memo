@@ -1,8 +1,11 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Input;
 using System.Windows.Media;
 using Microsoft.Win32;
+using Color = System.Windows.Media.Color;
+using Colors = System.Windows.Media.Colors;
 
 namespace ByeVS_Memo
 {
@@ -11,9 +14,13 @@ namespace ByeVS_Memo
         // 현재 다크 모드인지 기억하는 스위치 역할
         private bool isDarkMode = false;
 
+        // 시스템 트레이 아이콘
+        private System.Windows.Forms.NotifyIcon _notifyIcon = null!;
+
         public MainWindow()
         {
             InitializeComponent();
+            InitializeNotifyIcon();
 
             // 설정 파일이 존재하는지 확인
             if (File.Exists("theme_setting.txt"))
@@ -48,6 +55,43 @@ namespace ByeVS_Memo
             }
 
             RefreshRecentFilesMenu();
+        }
+
+        // [새 문서] Ctrl+N
+        private void NewCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            MainTextBox.Text = string.Empty;
+        }
+
+        // [열기] Ctrl+O
+        private void OpenCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            OpenButton_Click(sender, e);
+        }
+
+        // [저장] Ctrl+S
+        private void SaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            SaveButton_Click(sender, e);
+        }
+
+        // [자동 줄바꿈] 체크박스 토글
+        private void WordWrapCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            MainTextBox.TextWrapping = WordWrapCheckBox.IsChecked == true
+                ? TextWrapping.Wrap
+                : TextWrapping.NoWrap;
+        }
+
+        // [폰트 크기] Ctrl + 마우스 휠
+        private void MainTextBox_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+        {
+            if (Keyboard.Modifiers == ModifierKeys.Control)
+            {
+                double newSize = MainTextBox.FontSize + (e.Delta > 0 ? 1 : -1);
+                MainTextBox.FontSize = Math.Clamp(newSize, 8, 72);
+                e.Handled = true;
+            }
         }
 
         // [열기] 버튼 로직
@@ -148,6 +192,62 @@ namespace ByeVS_Memo
 
             string currentTheme = isDarkMode ? "Dark" : "Light";
             File.WriteAllText("theme_setting.txt", currentTheme);
+        }
+
+        // ── 투명도 슬라이더 ──────────────────────────────────────────
+        private void OpacitySlider_ValueChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        {
+            Opacity = e.NewValue;
+        }
+
+        // ── 시스템 트레이 ────────────────────────────────────────────
+        private void InitializeNotifyIcon()
+        {
+            _notifyIcon = new System.Windows.Forms.NotifyIcon
+            {
+                Icon = System.Drawing.SystemIcons.Application,
+                Text = "ByeVS-Memo",
+                Visible = false
+            };
+
+            var contextMenu = new System.Windows.Forms.ContextMenuStrip();
+            var openItem = new System.Windows.Forms.ToolStripMenuItem("열기");
+            var exitItem = new System.Windows.Forms.ToolStripMenuItem("종료");
+
+            openItem.Click += (s, e) => RestoreFromTray();
+            exitItem.Click += (s, e) => System.Windows.Application.Current.Shutdown();
+
+            contextMenu.Items.Add(openItem);
+            contextMenu.Items.Add(exitItem);
+            _notifyIcon.ContextMenuStrip = contextMenu;
+
+            _notifyIcon.DoubleClick += (s, e) => RestoreFromTray();
+        }
+
+        protected override void OnStateChanged(EventArgs e)
+        {
+            if (WindowState == WindowState.Minimized)
+            {
+                Hide();
+                ShowInTaskbar = false;
+                _notifyIcon.Visible = true;
+            }
+            base.OnStateChanged(e);
+        }
+
+        private void RestoreFromTray()
+        {
+            Show();
+            ShowInTaskbar = true;
+            WindowState = WindowState.Normal;
+            _notifyIcon.Visible = false;
+            Activate();
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            _notifyIcon.Dispose();
+            base.OnClosed(e);
         }
     }
 } // ★수정됨: 네임스페이스 닫는 중괄호

@@ -11,6 +11,12 @@ A lightweight Windows desktop toy project built with only VS Code and the .NET S
 
 ## 📝 Changelog
 
+### [2026-04-10]
+
+- **Keyboard Shortcuts**: Added `Ctrl+N` (new document), `Ctrl+O` (open file), and `Ctrl+S` (save file) via WPF `CommandBindings`.
+- **Word Wrap Toggle**: Added a "자동 줄바꿈" checkbox to the top panel that toggles `TextWrapping` on the main text area.
+- **Font Size via Ctrl+Wheel**: Holding `Ctrl` and scrolling the mouse wheel over the text area increases or decreases the font size (clamped between 8 and 72).
+
 ### [2026-03-22]
 
 - **Recent Files Menu**: File paths used via `Open` / `Save` are stored in `recent_files.json` (up to 10 entries) and can be reopened by filename from the **Recent Files** menu. Full path is shown in the tooltip. Selecting a deleted file shows a warning and removes it from the list. Menu colors adapt to the current dark/light theme.
