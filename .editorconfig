@@ -1,0 +1,7 @@
+root = true
+
+# MainWindow.xaml.cs — XAML-generated partial class fields (InitializeComponent,
+# named controls) live in obj/.../MainWindow.g.cs which VS Code's language server
+# does not index, causing false-positive CS0103 errors. Suppressed here.
+[MainWindow.xaml.cs]
+dotnet_diagnostic.CS0103.severity = none

@@ -1,5 +1,6 @@
 {
     "dotnet.defaultSolution": "ByeVS-Memo.sln",
     "csharp.suppressDotnetRestoreNotification": true,
-    "dotnet.backgroundAnalysis.analyzerDiagnosticsScope": "openFiles"
+    "dotnet.backgroundAnalysis.analyzerDiagnosticsScope": "none",
+    "dotnet.server.useOmnisharp": false
 }
