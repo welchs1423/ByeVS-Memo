@@ -1,23 +1,28 @@
 # ByeVS-Memo
-무거운 Visual Studio 환경을 벗어나, VS Code와 .NET SDK만으로 가볍게 C# WPF의 기본 구조와 이벤트 처리 흐름을 이해하기 위해 제작한 첫 번째 윈도우 데스크톱 토이 프로젝트임.
 
-## 🛠️ 기술 스택 및 환경 (Tech Stack & Tools)
+A lightweight Windows desktop toy project built with only VS Code and the .NET SDK — no heavy Visual Studio required. Created to understand the basic structure of C# WPF and event handling flow.
+
+## 🛠️ Tech Stack & Tools
+
 - **Language**: C#
 - **Framework**: .NET 8.0, WPF (Windows Presentation Foundation)
 - **IDE / Editor**: Visual Studio Code (C# Dev Kit)
 - **Tools**: .NET CLI, Git, GitHub
 
-## 📝 업데이트 내역 (Changelog)
+## 📝 Changelog
 
 ### [2026-03-22]
-- **최근 파일 목록**: `열기` / `저장`으로 사용한 파일 경로를 최대 10개까지 `recent_files.json`에 저장하고, 상단 메뉴 **최근 파일**에서 파일명으로 다시 열 수 있음. 툴팁에 전체 경로 표시. 이미 삭제된 파일을 선택하면 안내 후 목록에서 제거. 다크/라이트 테마에 맞춰 메뉴 색상도 함께 적용.
+
+- **Recent Files Menu**: File paths used via `Open` / `Save` are stored in `recent_files.json` (up to 10 entries) and can be reopened by filename from the **Recent Files** menu. Full path is shown in the tooltip. Selecting a deleted file shows a warning and removes it from the list. Menu colors adapt to the current dark/light theme.
 
 ### [2026-03-07]
-- **다크 모드 설정 유지**: 앱 종료 후 재실행 시에도 사용자가 마지막으로 선택한 테마(다크/라이트)가 `theme_setting.txt` 파일에 저장되고 유지되도록 파일 입출력 로직 추가.
+
+- **Persistent Theme Setting**: Added file I/O logic to save the user's last selected theme (dark/light) to `theme_setting.txt`, so it is restored on next launch.
 
 ### [2026-03-01]
-* **다크모드 지원**: UI 테마(다크/라이트 모드) 전환 기능 추가
-- **WPF 화면 구성 (XAML)**: `Grid`와 `StackPanel`을 활용하여 상단 버튼 영역(열기/저장)과 메인 텍스트 입력 영역(`TextBox`)을 분리하여 직관적인 UI를 설계함.
-- **파일 입출력(I/O) 연동**: `OpenFileDialog`와 `SaveFileDialog`를 통해 사용자가 내 컴퓨터의 `.txt` 파일을 직접 선택해 불러오고, 작성한 내용을 텍스트 파일로 저장할 수 있도록 C# 이벤트 핸들러 로직을 구현함.
-- **경량화 빌드 환경 구축**: 무거운 IDE 없이 터미널의 `dotnet new wpf` 명령어와 VS Code만으로 프로젝트를 생성하고, `dotnet run`으로 즉각적인 빌드 및 실행이 가능하도록 환경을 세팅함.
-- **Git 버전 관리 최적화**: `.NET` 전용 `.gitignore`를 적용하여 `bin/`, `obj/` 등 불필요한 임시 빌드 결과물을 배제하고, 순수 소스 코드만 깃허브 원격 저장소에 업로드되도록 저장소 상태를 깔끔하게 정립함.
+
+- **Dark Mode Support**: Added UI theme toggle (dark/light mode)
+- **WPF Layout (XAML)**: Designed an intuitive UI using `Grid` and `StackPanel` to separate the top button area (Open/Save) from the main text input area (`TextBox`).
+- **File I/O Integration**: Implemented C# event handler logic using `OpenFileDialog` and `SaveFileDialog` so users can open `.txt` files from their computer and save written content to a text file.
+- **Lightweight Build Setup**: Configured the environment to create a project with `dotnet new wpf` and run it instantly with `dotnet run`, using only a terminal and VS Code — no heavy IDE needed.
+- **Git Configuration**: Applied a `.NET`-specific `.gitignore` to exclude temporary build artifacts such as `bin/` and `obj/`, keeping the repository clean with only source code pushed to GitHub.
