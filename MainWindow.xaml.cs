@@ -20,6 +20,9 @@ namespace ByeVS_Memo
         private readonly DispatcherTimer _clockTimer;
         private readonly DispatcherTimer _autoSaveTimer;
 
+        // 타임스탬프 삽입 커맨드 (F5)
+        public static readonly RoutedCommand InsertTimestampCommand = new RoutedCommand();
+
         // 몰입 모드 상태
         private bool _isFocusMode = false;
         private WindowState _prevWindowState = WindowState.Normal;
@@ -74,6 +77,7 @@ namespace ByeVS_Memo
             }
 
             ApplySearchPanelTheme(isDarkMode);
+            ApplyLineNumberTheme(isDarkMode);
             RefreshRecentFilesMenu();
 
             // 시계 타이머 (1초 간격)
@@ -174,6 +178,49 @@ namespace ByeVS_Memo
                 double newSize = MainTextBox.FontSize + (e.Delta > 0 ? 1 : -1);
                 MainTextBox.FontSize = Math.Clamp(newSize, 8, 72);
                 e.Handled = true;
+            }
+        }
+
+        // ── 드래그 앤 드롭 파일 열기 ────────────────────────────────
+        private void MainTextBox_PreviewDragOver(object sender, DragEventArgs e)
+        {
+            if (e.Data.GetDataPresent(DataFormats.FileDrop))
+                e.Effects = DragDropEffects.Copy;
+            else
+                e.Effects = DragDropEffects.None;
+
+            e.Handled = true;
+        }
+
+        private void MainTextBox_Drop(object sender, DragEventArgs e)
+        {
+            try
+            {
+                if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+                    return;
+
+                string[]? files = e.Data.GetData(DataFormats.FileDrop) as string[];
+                if (files == null || files.Length == 0)
+                    return;
+
+                // 여러 파일을 동시에 드롭해도 첫 번째 파일만 열기
+                string path = files[0];
+
+                if (!File.Exists(path))
+                {
+                    MessageBox.Show($"파일을 찾을 수 없습니다:\n{path}", "경고",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                MainTextBox.Text = File.ReadAllText(path);
+                RecentFilesStore.Add(path);
+                RefreshRecentFilesMenu();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"파일을 여는 중 오류가 발생했습니다:\n{ex.Message}", "오류",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
 
@@ -282,6 +329,7 @@ namespace ByeVS_Memo
             }
 
             ApplySearchPanelTheme(isDarkMode);
+            ApplyLineNumberTheme(isDarkMode);
             string currentTheme = isDarkMode ? "Dark" : "Light";
             File.WriteAllText("theme_setting.txt", currentTheme);
         }
@@ -325,6 +373,16 @@ namespace ByeVS_Memo
                 _notifyIcon.Visible = true;
             }
             base.OnStateChanged(e);
+        }
+
+        // ── 타임스탬프 삽입 (F5) ─────────────────────────────────────
+        private void InsertTimestampCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            string timestamp = $" [{DateTime.Now:yyyy-MM-dd HH:mm}] ";
+            int caretIndex = MainTextBox.CaretIndex;
+            MainTextBox.Text = MainTextBox.Text.Insert(caretIndex, timestamp);
+            MainTextBox.CaretIndex = caretIndex + timestamp.Length;
+            e.Handled = true;
         }
 
         // ── 몰입 모드 (F11 / Esc) ────────────────────────────────────
@@ -399,6 +457,7 @@ namespace ByeVS_Memo
         private void MainTextBox_TextChanged(object sender, TextChangedEventArgs e)
         {
             UpdateCharCount();
+            UpdateLineNumbers();
         }
 
         private void UpdateCursorPosition()
@@ -416,6 +475,29 @@ namespace ByeVS_Memo
             CharCountText.Text = $"글자 수: {MainTextBox.Text.Length}";
         }
 
+        // ── 줄 번호 업데이트 ─────────────────────────────────────────
+        private void UpdateLineNumbers()
+        {
+            string text = MainTextBox.Text;
+            int lineCount = 1;
+            for (int i = 0; i < text.Length; i++)
+                if (text[i] == '\n') lineCount++;
+
+            var sb = new StringBuilder(lineCount * 3);
+            for (int i = 1; i <= lineCount; i++)
+            {
+                if (i > 1) sb.Append('\n');
+                sb.Append(i);
+            }
+            LineNumbersText.Text = sb.ToString();
+        }
+
+        // ── 줄 번호 스크롤 동기화 ────────────────────────────────────
+        private void MainTextBox_ScrollChanged(object sender, ScrollChangedEventArgs e)
+        {
+            LineNumberScroller.ScrollToVerticalOffset(e.VerticalOffset);
+        }
+
         // ── 시계 타이머 ──────────────────────────────────────────────
         private void ClockTimer_Tick(object? sender, EventArgs e)
         {
@@ -431,6 +513,21 @@ namespace ByeVS_Memo
         }
 
         // ── 찾기 및 바꾸기 ───────────────────────────────────────────
+        // ── 줄 번호 영역 테마 ─────────────────────────────────────
+        private void ApplyLineNumberTheme(bool dark)
+        {
+            if (dark)
+            {
+                LineNumberBorder.Background = new SolidColorBrush(Color.FromRgb(37, 37, 38));
+                LineNumbersText.Foreground = new SolidColorBrush(Color.FromRgb(133, 133, 133));
+            }
+            else
+            {
+                LineNumberBorder.Background = new SolidColorBrush(Color.FromRgb(232, 232, 232));
+                LineNumbersText.Foreground = new SolidColorBrush(Color.FromRgb(119, 119, 119));
+            }
+        }
+
         private void ApplySearchPanelTheme(bool dark)
         {
             if (dark)
