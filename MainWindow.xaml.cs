@@ -1,3 +1,4 @@
+using System.Globalization;
 using System;
 using System.IO;
 using System.Text;
@@ -15,6 +16,14 @@ namespace ByeVS_Memo
 {
     public partial class MainWindow : Window
     {
+
+
+        // ...기존 코드 계속...
+    }
+}
+
+
+
         // 현재 다크 모드인지 기억하는 스위치 역할
         private bool isDarkMode = false;
         private readonly DispatcherTimer _clockTimer;
@@ -164,80 +173,104 @@ namespace ByeVS_Memo
                         // MainTextBox 드래그 이동용
                         private bool _isDraggingSticky = false;
                         private Point _dragStartPoint;
-        }
-
         // [열기] Ctrl+O
         private void OpenCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
-
-                            CommandBindings.Add(new CommandBinding(ToggleStickyNoteModeCommand, ToggleStickyNoteModeCommand_Executed));
             OpenButton_Click(sender, e);
         }
 
         // [저장] Ctrl+S
         private void SaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
-                            if (e.Key == Key.F11)
-                            {
-                                ToggleFocusMode();
-                                e.Handled = true;
-                            }
-                            else if (e.Key == Key.F12)
-                            {
-                                ToggleStickyNoteMode();
-                                e.Handled = true;
-                            }
-                            else if (e.Key == Key.Escape && _isFocusMode)
-                            {
-                                ToggleFocusMode();
-                                e.Handled = true;
-                            }
+        {
+            SaveButton_Click(sender, e);
         }
 
-                        // 포스트잇 모드 토글 (F12/버튼)
-                        private void ToggleStickyNoteModeCommand_Executed(object sender, ExecutedRoutedEventArgs e)
-                        {
-                            ToggleStickyNoteMode();
-                        }
+        // 포스트잇 모드 토글 (F12/버튼)
+        private void ToggleStickyNoteModeCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+        {
+            ToggleStickyNoteMode();
+        }
 
-                        private void StickyNoteButton_Click(object sender, RoutedEventArgs e)
-                        {
-                            ToggleStickyNoteMode();
-                        }
+        private void StickyNoteButton_Click(object sender, RoutedEventArgs e)
+        {
+            ToggleStickyNoteMode();
+        }
 
-                        private void ToggleStickyNoteMode()
-                        {
-                            if (_isStickyNoteMode)
-                            {
-                                // 복구
-                                WindowStyle = _prevStickyWindowStyle;
-                                ResizeMode = _prevStickyResizeMode;
-                                Width = _prevStickyWidth;
-                                Height = _prevStickyHeight;
-                                Left = _prevStickyLeft;
-                                Top = _prevStickyTop;
-                                TopPanelContainer.Visibility = _prevTopPanelVisibility;
-                                MainStatusBar.Visibility = _prevStatusBarVisibility;
-                                StickyNoteButton.Content = "🗒️ 포스트잇";
-                                MainTextBox.Cursor = Cursors.IBeam;
-                                _isStickyNoteMode = false;
-                            }
-                            else
-                            {
-                                // 현재 상태 저장
-                                _prevStickyWindowStyle = WindowStyle;
-                                _prevStickyResizeMode = ResizeMode;
-                                _prevStickyWidth = Width;
-                                _prevStickyHeight = Height;
-                                _prevStickyLeft = Left;
-                                _prevStickyTop = Top;
-                                _prevTopPanelVisibility = TopPanelContainer.Visibility;
-                                _prevStatusBarVisibility = MainStatusBar.Visibility;
+        private void ToggleStickyNoteMode()
 
-                                // 포스트잇 모드 적용
-                                WindowStyle = WindowStyle.None;
-                                ResizeMode = ResizeMode.NoResize;
-                                Width = 300;
-                                Height = 300;
+                                // ── MainTextBox 컨텍스트 메뉴 핸들러 ─────────────────────────────
+                                private void MenuItem_Uppercase_Click(object sender, RoutedEventArgs e)
+                                {
+                                    ApplyTextTransform(s => s.ToUpper());
+                                }
+
+                                private void MenuItem_Lowercase_Click(object sender, RoutedEventArgs e)
+                                {
+                                    ApplyTextTransform(s => s.ToLower());
+                                }
+
+                                private void MenuItem_RemoveEmptyLines_Click(object sender, RoutedEventArgs e)
+                                {
+                                    ApplyTextTransform(s => string.Join("\n", s.Split('\n').Where(line => !string.IsNullOrWhiteSpace(line))));
+                                }
+
+                                private void ApplyTextTransform(Func<string, string> transform)
+                                {
+                                    var tb = MainTextBox;
+                                    if (tb == null) return;
+                                    string result;
+                                    if (tb.SelectionLength > 0)
+                                    {
+                                        int selStart = tb.SelectionStart;
+                                        int selLen = tb.SelectionLength;
+                                        string selected = tb.SelectedText;
+                                        result = transform(selected);
+                                        tb.Text = tb.Text.Remove(selStart, selLen).Insert(selStart, result);
+                                        tb.Select(selStart, result.Length);
+                                    }
+                                    else
+                                    {
+                                        result = transform(tb.Text);
+                                        tb.Text = result;
+                                        tb.Select(0, tb.Text.Length);
+                                    }
+                                    // 텍스트 변경 이벤트 강제 발생 (상태바/테마 등 연동)
+                                    MainTextBox_TextChanged(tb, null);
+                                    MainTextBox_SelectionChanged(tb, null);
+                                }
+        {
+            if (_isStickyNoteMode)
+            {
+                // 복구
+                WindowStyle = _prevStickyWindowStyle;
+                ResizeMode = _prevStickyResizeMode;
+                Width = _prevStickyWidth;
+                Height = _prevStickyHeight;
+                Left = _prevStickyLeft;
+                Top = _prevStickyTop;
+                TopPanelContainer.Visibility = _prevTopPanelVisibility;
+                MainStatusBar.Visibility = _prevStatusBarVisibility;
+                StickyNoteButton.Content = "🗒️ 포스트잇";
+                MainTextBox.Cursor = Cursors.IBeam;
+                _isStickyNoteMode = false;
+            }
+            else
+            {
+                // 현재 상태 저장
+                _prevStickyWindowStyle = WindowStyle;
+                _prevStickyResizeMode = ResizeMode;
+                _prevStickyWidth = Width;
+                _prevStickyHeight = Height;
+                _prevStickyLeft = Left;
+                _prevStickyTop = Top;
+                _prevTopPanelVisibility = TopPanelContainer.Visibility;
+                _prevStatusBarVisibility = MainStatusBar.Visibility;
+
+                // 포스트잇 모드 적용
+                WindowStyle = WindowStyle.None;
+                ResizeMode = ResizeMode.NoResize;
+                Width = 300;
+                Height = 300;
                                 // 화면 중앙 배치
                                 Left = (SystemParameters.WorkArea.Width - 300) / 2 + SystemParameters.WorkArea.Left;
                                 Top = (SystemParameters.WorkArea.Height - 300) / 2 + SystemParameters.WorkArea.Top;
@@ -356,10 +389,58 @@ namespace ByeVS_Memo
 
             if (saveFileDialog.ShowDialog() == true)
             {
-                File.WriteAllText(saveFileDialog.FileName, MainTextBox.Text);
-                RecentFilesStore.Add(saveFileDialog.FileName);
-                RefreshRecentFilesMenu();
-                MessageBox.Show("저장이 완료되었습니다!", "알림");
+                try
+                {
+                    File.WriteAllText(saveFileDialog.FileName, MainTextBox.Text);
+                    // 안전 백업 시스템 호출
+                    TryHistoryBackup(saveFileDialog.FileName);
+                    RecentFilesStore.Add(saveFileDialog.FileName);
+                    RefreshRecentFilesMenu();
+                    MessageBox.Show("저장이 완료되었습니다!", "알림");
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"저장 중 오류가 발생했습니다:\n{ex.Message}", "저장 오류", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 안전 백업 시스템: 저장 시 백업본을 Backups 폴더에 타임스탬프 파일명으로 남김
+        /// </summary>
+        /// <param name="originalFilePath">저장하려는 원본 파일 경로</param>
+        private void TryHistoryBackup(string originalFilePath)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(originalFilePath) || !File.Exists(originalFilePath))
+                {
+                    // '제목 없음' 등 임시/미저장 상태는 무시
+                    return;
+                }
+
+                string appDir = AppDomain.CurrentDomain.BaseDirectory;
+                string backupDir = Path.Combine(appDir, "Backups");
+                if (!Directory.Exists(backupDir))
+                {
+                    Directory.CreateDirectory(backupDir);
+                }
+
+                string fileName = Path.GetFileNameWithoutExtension(originalFilePath);
+                string ext = Path.GetExtension(originalFilePath);
+                string timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
+                string backupFileName = $"{fileName}_{timestamp}{ext}";
+                string backupPath = Path.Combine(backupDir, backupFileName);
+                File.Copy(originalFilePath, backupPath, true);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                MessageBox.Show("백업 폴더 생성 또는 파일 복사 권한이 없습니다.\n관리자 권한으로 실행하거나 폴더 권한을 확인하세요.", "백업 오류", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+            catch (Exception ex)
+            {
+                // 기타 예외는 조용히 무시(저장 자체는 성공해야 함)
+                System.Diagnostics.Debug.WriteLine($"[HistoryBackup] {ex.Message}");
             }
         }
 

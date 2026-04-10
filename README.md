@@ -11,23 +11,16 @@ A lightweight Windows desktop toy project built with only VS Code and the .NET S
 
 ## 📝 Changelog
 
-
 ### [2026-04-10]
-- **창틀 없는 포스트잇(스티키 노트) 모드 추가 (F12/버튼)**: F12 또는 상단 패널의 "🗒️ 포스트잇" 버튼을 누르면 창틀(WindowStyle)이 사라지고, TopPanel/StatusBar가 숨겨지며, 창 크기가 300x300으로 작아집니다. MainTextBox의 아무 곳이나 드래그하면 창 전체가 이동합니다. 다시 F12 또는 버튼을 누르면 원래 상태로 복구됩니다. 몰입 모드(F11)와 독립적으로 동작합니다.
 
+- **창틀 없는 포스트잇(스티키 노트) 모드 추가 (F12/버튼)**: F12 또는 상단 패널의 "🗒️ 포스트잇" 버튼을 누르면 창틀(WindowStyle)이 사라지고, TopPanel/StatusBar가 숨겨지며, 창 크기가 300x300으로 작아집니다. MainTextBox의 아무 곳이나 드래그하면 창 전체가 이동합니다. 다시 F12 또는 버튼을 누르면 원래 상태로 복구됩니다. 몰입 모드(F11)와 독립적으로 동작합니다.
+- **Text Context Menu**: MainTextBox에 우클릭 컨텍스트 메뉴(대문자로 변환, 소문자로 변환, 빈 줄 모두 제거) 추가. 선택 영역이 있으면 해당 부분만, 없으면 전체 텍스트에 적용됨. 변환 후에도 테마, 글자 수, 상태바 등 기존 이벤트 정상 연동됨.
 - **프로젝트 설정 파일 관리**: `.vscode/settings.json`은 빌드/진단/출력 관련 프로젝트 공통 설정을 위해 버전 관리에 포함됩니다. (예: 빌드 출력/진단 메시지 suppress, 문제 목록 필터 등)
-
-- **창틀 없는 포스트잇(스티키 노트) 모드 추가 (F12/버튼)**: F12 또는 상단 패널의 "🗒️ 포스트잇" 버튼을 누르면 창틀(WindowStyle)이 사라지고, TopPanel/StatusBar가 숨겨지며, 창 크기가 300x300으로 작아집니다. MainTextBox의 아무 곳이나 드래그하면 창 전체가 이동합니다. 다시 F12 또는 버튼을 누르면 원래 상태로 복구됩니다. 몰입 모드(F11)와 독립적으로 동작합니다.
-
-### [2026-04-10]
-
 - **Timestamp Insert (F5)**: Pressing `F5` inserts the current date and time as `[yyyy-MM-dd HH:mm]` at the caret position in the editor. Implemented via a `RoutedCommand` (`InsertTimestampCommand`) bound to `F5` through `Window.InputBindings` and `Window.CommandBindings`. Uses `String.Insert` to splice the timestamp into the existing text without overwriting any content; the caret is advanced to the character immediately after the inserted string.
-
 - **Print (Ctrl+P)**: Added print support via `ApplicationCommands.Print` binding. Invokes `PrintDialog` and renders the current text into a `FlowDocument` fitted to the printer's printable area (50 px padding). Wrapped in `try-catch` to gracefully handle printer errors without crashing the app.
 - **Document Statistics**: Added a `통계` button to the top panel. Clicking it displays a `MessageBox` with three metrics: total word count (split on whitespace/tab/newline), UTF-8 byte size (1 byte per ASCII char, 3 bytes per Korean character), and logical line count.
 - **Drag & Drop File Open**: Set `AllowDrop="True"` on `MainTextBox`. Dropping any file onto the editor area reads its contents into the text box and adds the path to the recent files list (`recent_files.json`). Only the first file is opened when multiple files are dropped simultaneously; non-file data and missing paths are handled gracefully without crashing.
 - **Line Numbers**: Added a line-number gutter to the left of the main text area. A narrow `Border` + `ScrollViewer` panel (45 px wide) sits in `Column 0` of a new two-column `Grid`; the `MainTextBox` occupies `Column 1`. Line numbers are redrawn on every `TextChanged` event by counting `\n` characters (logical lines, O(n) scan via `StringBuilder`). Vertical scroll is synchronized pixel-for-pixel by forwarding `ScrollViewer.ScrollChanged` offsets from the TextBox to the line-number `ScrollViewer`. The gutter background and foreground update automatically when switching between dark mode (`#252526` / `#858585`) and light mode (`#E8E8E8` / `#777777`) via a new `ApplyLineNumberTheme(bool dark)` helper.
-
 - **Status Bar**: Added a bottom status bar (Row 2 of `MainGrid`) that displays three live-updated items on the right side: current cursor position (줄/칸), total character count, and a real-time clock (HH:mm:ss). Updated via `SelectionChanged` and `TextChanged` events; the clock uses a 1-second `DispatcherTimer`.
 - **Always-on-Top Toggle**: Added a 📌 `ToggleButton` to the top panel. Clicking it sets `Window.Topmost` to `true`/`false`, keeping the window pinned above all others while active.
 - **Auto-Save**: A 1-minute `DispatcherTimer` silently saves the current text to `autosave_temp.txt` in the application folder using `await Task.Run(...)` to avoid UI freezing. Both timers are stopped on window close.
@@ -55,3 +48,6 @@ A lightweight Windows desktop toy project built with only VS Code and the .NET S
 - **File I/O Integration**: Implemented C# event handler logic using `OpenFileDialog` and `SaveFileDialog` so users can open `.txt` files from their computer and save written content to a text file.
 - **Lightweight Build Setup**: Configured the environment to create a project with `dotnet new wpf` and run it instantly with `dotnet run`, using only a terminal and VS Code — no heavy IDE needed.
 - **Git Configuration**: Applied a `.NET`-specific `.gitignore` to exclude temporary build artifacts such as `bin/` and `obj/`, keeping the repository clean with only source code pushed to GitHub.
+- **Text Context Menu**: MainTextBox에 우클릭 컨텍스트 메뉴(대문자로 변환, 소문자로 변환, 빈 줄 모두 제거) 추가. 선택 영역이 있으면 해당 부분만, 없으면 전체 텍스트에 적용됨. 변환 후에도 테마, 글자 수, 상태바 등 기존 이벤트 정상 연동됨.
+
+- **History Backup System**: Every time you save a file (via the Save button or Ctrl+S), a backup copy is automatically created in the `Backups` folder under the program directory. The backup file is named with the original filename plus a timestamp (e.g., `filename_20260410_193000.txt`). If the folder does not exist, it is created automatically. Permission errors are handled gracefully, and saving a new/untitled document does not trigger a backup or error.

@@ -91,13 +91,6 @@
                                            Width="1"/>
                                 <TextBlock Text="투명도"
                                            VerticalAlignment="Center"
-                                                <Button x:Name="StickyNoteButton"
-                                                        Content="🗒️ 포스트잇"
-                                                        Click="StickyNoteButton_Click"
-                                                        Margin="0,0,5,5"
-                                                        Width="80"
-                                                        Height="25"
-                                                        ToolTip="포스트잇 모드 전환 (F12)"/>
                                            Margin="0,0,5,5"/>
                                 <Slider x:Name="OpacitySlider"
                                         Minimum="0.2"
@@ -108,6 +101,13 @@
                                         Margin="0,0,5,5"
                                         ValueChanged="OpacitySlider_ValueChanged"
                                         ToolTip="창 투명도 조절 (20% ~ 100%)"/>
+                                <Button x:Name="StickyNoteButton"
+                                        Content="🗒️ 포스트잇"
+                                        Click="StickyNoteButton_Click"
+                                        Margin="0,0,5,5"
+                                        Width="80"
+                                        Height="25"
+                                        ToolTip="포스트잇 모드 전환 (F12)"/>
                         </StackPanel>
                 </Grid>
 
@@ -191,18 +191,18 @@
                                 <Border x:Name="LineNumberBorder"
                                         Grid.Column="0"
                                         Background="#E8E8E8">
-                                        <ScrollViewer x:Name="LineNumberScroller"
-                                                      VerticalScrollBarVisibility="Hidden"
-                                                      HorizontalScrollBarVisibility="Hidden"
-                                                      IsHitTestVisible="False"
-                                                      Focusable="False">
-                                                <TextBlock x:Name="LineNumbersText"
-                                                           Text="1"
-                                                           FontSize="15"
-                                                           TextAlignment="Right"
-                                                           Padding="0,10,6,10"
-                                                           Foreground="#777777"/>
-                                        </ScrollViewer>
+                                    <ScrollViewer x:Name="LineNumberScroller"
+                                                  VerticalScrollBarVisibility="Hidden"
+                                                  HorizontalScrollBarVisibility="Hidden"
+                                                  IsHitTestVisible="False"
+                                                  Focusable="False">
+                                        <TextBlock x:Name="LineNumbersText"
+                                                   Text="1"
+                                                   FontSize="15"
+                                                   TextAlignment="Right"
+                                                   Padding="0,10,6,10"
+                                                   Foreground="#777777"/>
+                                    </ScrollViewer>
                                 </Border>
                                 <TextBox x:Name="MainTextBox"
                                          Grid.Column="1"
@@ -218,7 +218,15 @@
                                          PreviewMouseWheel="MainTextBox_PreviewMouseWheel"
                                          SelectionChanged="MainTextBox_SelectionChanged"
                                          TextChanged="MainTextBox_TextChanged"
-                                         ScrollViewer.ScrollChanged="MainTextBox_ScrollChanged"/>
+                                         ScrollViewer.ScrollChanged="MainTextBox_ScrollChanged">
+                                    <TextBox.ContextMenu>
+                                        <ContextMenu>
+                                            <MenuItem Header="대문자로 변환 (UPPERCASE)" Click="MenuItem_Uppercase_Click"/>
+                                            <MenuItem Header="소문자로 변환 (lowercase)" Click="MenuItem_Lowercase_Click"/>
+                                            <MenuItem Header="빈 줄 모두 제거 (Remove Empty Lines)" Click="MenuItem_RemoveEmptyLines_Click"/>
+                                        </ContextMenu>
+                                    </TextBox.ContextMenu>
+                                </TextBox>
                         </Grid>
                 </Grid>
 
