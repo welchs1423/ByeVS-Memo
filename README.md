@@ -11,7 +11,11 @@ A lightweight Windows desktop toy project built with only VS Code and the .NET S
 
 ## 📝 Changelog
 
+
 ### [2026-04-10]
+- **창틀 없는 포스트잇(스티키 노트) 모드 추가 (F12/버튼)**: F12 또는 상단 패널의 "🗒️ 포스트잇" 버튼을 누르면 창틀(WindowStyle)이 사라지고, TopPanel/StatusBar가 숨겨지며, 창 크기가 300x300으로 작아집니다. MainTextBox의 아무 곳이나 드래그하면 창 전체가 이동합니다. 다시 F12 또는 버튼을 누르면 원래 상태로 복구됩니다. 몰입 모드(F11)와 독립적으로 동작합니다.
+
+- **프로젝트 설정 파일 관리**: `.vscode/settings.json`은 빌드/진단/출력 관련 프로젝트 공통 설정을 위해 버전 관리에 포함됩니다. (예: 빌드 출력/진단 메시지 suppress, 문제 목록 필터 등)
 
 - **창틀 없는 포스트잇(스티키 노트) 모드 추가 (F12/버튼)**: F12 또는 상단 패널의 "🗒️ 포스트잇" 버튼을 누르면 창틀(WindowStyle)이 사라지고, TopPanel/StatusBar가 숨겨지며, 창 크기가 300x300으로 작아집니다. MainTextBox의 아무 곳이나 드래그하면 창 전체가 이동합니다. 다시 F12 또는 버튼을 누르면 원래 상태로 복구됩니다. 몰입 모드(F11)와 독립적으로 동작합니다.
 

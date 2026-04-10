@@ -2,5 +2,12 @@
     "dotnet.defaultSolution": "ByeVS-Memo.sln",
     "csharp.suppressDotnetRestoreNotification": true,
     "dotnet.backgroundAnalysis.analyzerDiagnosticsScope": "none",
-    "dotnet.server.useOmnisharp": false
+    "dotnet.server.useOmnisharp": false,
+    "problems.exclude": {
+        "**/*.cs": true,
+        "**/*.g.cs": true,
+        "**/*.Designer.cs": true
+    },
+    "csharp.suppressHiddenDiagnostics": true,
+    "csharp.suppressBuildOutput": true
 }
