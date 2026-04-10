@@ -11,19 +11,16 @@ A lightweight Windows desktop toy project built with only VS Code and the .NET S
 
 ## 📝 Changelog
 
-### [2026-04-10] (2)
+### [2026-04-10]
 
 - **Status Bar**: Added a bottom status bar (Row 2 of `MainGrid`) that displays three live-updated items on the right side: current cursor position (줄/칸), total character count, and a real-time clock (HH:mm:ss). Updated via `SelectionChanged` and `TextChanged` events; the clock uses a 1-second `DispatcherTimer`.
 - **Always-on-Top Toggle**: Added a 📌 `ToggleButton` to the top panel. Clicking it sets `Window.Topmost` to `true`/`false`, keeping the window pinned above all others while active.
 - **Auto-Save**: A 1-minute `DispatcherTimer` silently saves the current text to `autosave_temp.txt` in the application folder using `await Task.Run(...)` to avoid UI freezing. Both timers are stopped on window close.
 - **Theme Sync**: Status bar background and text colors now update alongside the rest of the UI when switching between dark and light mode.
-
-### [2026-04-10]
-
 - **Window Opacity Slider**: Added a slider to the top panel to adjust window transparency from 20% to 100%, preventing the window from becoming fully invisible and unclickable.
-- **System Tray Minimize**: Minimizing the window now hides it from the taskbar and places it in the system tray (notification area). Double-clicking the tray icon restores the window. Right-clicking shows a context menu with **열기** (Restore) and **종료** (Exit) options. Uses `System.Windows.Forms.NotifyIcon` via `UseWindowsForms` in the project file.
+- **System Tray Minimize**: Minimizing the window now hides it from the taskbar and places it in the system tray (notification area). Double-clicking the tray icon restores the window. Right-clicking shows a context menu with **Restore** and **Exit** options. Uses `System.Windows.Forms.NotifyIcon` via `UseWindowsForms` in the project file.
 - **Keyboard Shortcuts**: Added `Ctrl+N` (new document), `Ctrl+O` (open file), and `Ctrl+S` (save file) via WPF `CommandBindings`.
-- **Word Wrap Toggle**: Added a "자동 줄바꿈" checkbox to the top panel that toggles `TextWrapping` on the main text area.
+- **Word Wrap Toggle**: Added a word wrap checkbox to the top panel that toggles `TextWrapping` on the main text area.
 - **Font Size via Ctrl+Wheel**: Holding `Ctrl` and scrolling the mouse wheel over the text area increases or decreases the font size (clamped between 8 and 72).
 
 ### [2026-03-22]
