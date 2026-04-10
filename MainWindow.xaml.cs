@@ -1,8 +1,11 @@
+using System;
 using System.IO;
+using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Threading;
 using Microsoft.Win32;
 using Color = System.Windows.Media.Color;
 using Colors = System.Windows.Media.Colors;
@@ -13,6 +16,8 @@ namespace ByeVS_Memo
     {
         // 현재 다크 모드인지 기억하는 스위치 역할
         private bool isDarkMode = false;
+        private readonly DispatcherTimer _clockTimer;
+        private readonly DispatcherTimer _autoSaveTimer;
 
         // 시스템 트레이 아이콘
         private System.Windows.Forms.NotifyIcon _notifyIcon = null!;
@@ -39,6 +44,10 @@ namespace ByeVS_Memo
                     MainMenu.Background = new SolidColorBrush(Color.FromRgb(45, 45, 48));
                     MainMenu.Foreground = new SolidColorBrush(Colors.White);
                     ThemeButton.Content = "라이트 모드";
+                    MainStatusBar.Background = new SolidColorBrush(Color.FromRgb(37, 37, 38));
+                    CursorPosText.Foreground = new SolidColorBrush(Colors.White);
+                    CharCountText.Foreground = new SolidColorBrush(Colors.White);
+                    ClockText.Foreground = new SolidColorBrush(Colors.White);
                 }
                 else
                 {
@@ -51,10 +60,27 @@ namespace ByeVS_Memo
                     MainMenu.Background = new SolidColorBrush(Color.FromRgb(240, 240, 240));
                     MainMenu.Foreground = new SolidColorBrush(Colors.Black);
                     ThemeButton.Content = "다크 모드";
+                    MainStatusBar.Background = new SolidColorBrush(Color.FromRgb(240, 240, 240));
+                    CursorPosText.Foreground = new SolidColorBrush(Colors.Black);
+                    CharCountText.Foreground = new SolidColorBrush(Colors.Black);
+                    ClockText.Foreground = new SolidColorBrush(Colors.Black);
                 }
             }
 
             RefreshRecentFilesMenu();
+
+            // 시계 타이머 (1초 간격)
+            _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
+            _clockTimer.Tick += ClockTimer_Tick;
+            _clockTimer.Start();
+
+            // 자동 저장 타이머 (1분 간격)
+            _autoSaveTimer = new DispatcherTimer { Interval = TimeSpan.FromMinutes(1) };
+            _autoSaveTimer.Tick += AutoSaveTimer_Tick;
+            _autoSaveTimer.Start();
+
+            // 초기 시간 표시
+            ClockText.Text = DateTime.Now.ToString("HH:mm:ss");
         }
 
         // [새 문서] Ctrl+N
@@ -177,6 +203,10 @@ namespace ByeVS_Memo
                 MainMenu.Background = new SolidColorBrush(Color.FromRgb(45, 45, 48));
                 MainMenu.Foreground = new SolidColorBrush(Colors.White);
                 ThemeButton.Content = "라이트 모드";
+                MainStatusBar.Background = new SolidColorBrush(Color.FromRgb(37, 37, 38));
+                CursorPosText.Foreground = new SolidColorBrush(Colors.White);
+                CharCountText.Foreground = new SolidColorBrush(Colors.White);
+                ClockText.Foreground = new SolidColorBrush(Colors.White);
             }
             else
             {
@@ -188,6 +218,10 @@ namespace ByeVS_Memo
                 MainMenu.Background = new SolidColorBrush(Color.FromRgb(240, 240, 240));
                 MainMenu.Foreground = new SolidColorBrush(Colors.Black);
                 ThemeButton.Content = "다크 모드";
+                MainStatusBar.Background = new SolidColorBrush(Color.FromRgb(240, 240, 240));
+                CursorPosText.Foreground = new SolidColorBrush(Colors.Black);
+                CharCountText.Foreground = new SolidColorBrush(Colors.Black);
+                ClockText.Foreground = new SolidColorBrush(Colors.Black);
             }
 
             string currentTheme = isDarkMode ? "Dark" : "Light";
@@ -246,8 +280,57 @@ namespace ByeVS_Memo
 
         protected override void OnClosed(EventArgs e)
         {
+            _clockTimer.Stop();
+            _autoSaveTimer.Stop();
             _notifyIcon.Dispose();
             base.OnClosed(e);
+        }
+
+        // ── 항상 위로 고정 ───────────────────────────────────────────
+        private void TopmostButton_Click(object sender, RoutedEventArgs e)
+        {
+            Topmost = TopmostButton.IsChecked == true;
+        }
+
+        // ── 상태 표시줄: 커서 위치 ───────────────────────────────────
+        private void MainTextBox_SelectionChanged(object sender, RoutedEventArgs e)
+        {
+            UpdateCursorPosition();
+        }
+
+        // ── 상태 표시줄: 글자 수 ─────────────────────────────────────
+        private void MainTextBox_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            UpdateCharCount();
+        }
+
+        private void UpdateCursorPosition()
+        {
+            int caretIndex = MainTextBox.CaretIndex;
+            int lineIndex = MainTextBox.GetLineIndexFromCharacterIndex(caretIndex);
+            if (lineIndex < 0) return;
+            int lineStartIndex = MainTextBox.GetCharacterIndexFromLineIndex(lineIndex);
+            int col = caretIndex - lineStartIndex + 1;
+            CursorPosText.Text = $"줄: {lineIndex + 1}, 칸: {col}";
+        }
+
+        private void UpdateCharCount()
+        {
+            CharCountText.Text = $"글자 수: {MainTextBox.Text.Length}";
+        }
+
+        // ── 시계 타이머 ──────────────────────────────────────────────
+        private void ClockTimer_Tick(object? sender, EventArgs e)
+        {
+            ClockText.Text = DateTime.Now.ToString("HH:mm:ss");
+        }
+
+        // ── 자동 저장 타이머 ─────────────────────────────────────────
+        private async void AutoSaveTimer_Tick(object? sender, EventArgs e)
+        {
+            string content = MainTextBox.Text;
+            string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "autosave_temp.txt");
+            await Task.Run(() => File.WriteAllText(path, content));
         }
     }
 } // ★수정됨: 네임스페이스 닫는 중괄호
