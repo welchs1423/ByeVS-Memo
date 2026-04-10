@@ -9,6 +9,8 @@
         <Window.InputBindings>
                 <KeyBinding Key="F5"
                                 Command="{x:Static local:MainWindow.InsertTimestampCommand}"/>
+                <KeyBinding Key="F12"
+                                Command="{x:Static local:MainWindow.ToggleStickyNoteModeCommand}"/>
         </Window.InputBindings>
         <Window.CommandBindings>
                 <CommandBinding Command="ApplicationCommands.New"
@@ -21,6 +23,8 @@
                                 Executed="PrintCommand_Executed"/>
                 <CommandBinding Command="{x:Static local:MainWindow.InsertTimestampCommand}"
                                 Executed="InsertTimestampCommand_Executed"/>
+                <CommandBinding Command="{x:Static local:MainWindow.ToggleStickyNoteModeCommand}"
+                                Executed="ToggleStickyNoteModeCommand_Executed"/>
         </Window.CommandBindings>
         <Grid x:Name="MainGrid">
                 <Grid.RowDefinitions>
@@ -87,6 +91,13 @@
                                            Width="1"/>
                                 <TextBlock Text="투명도"
                                            VerticalAlignment="Center"
+                                                <Button x:Name="StickyNoteButton"
+                                                        Content="🗒️ 포스트잇"
+                                                        Click="StickyNoteButton_Click"
+                                                        Margin="0,0,5,5"
+                                                        Width="80"
+                                                        Height="25"
+                                                        ToolTip="포스트잇 모드 전환 (F12)"/>
                                            Margin="0,0,5,5"/>
                                 <Slider x:Name="OpacitySlider"
                                         Minimum="0.2"
@@ -126,6 +137,9 @@
                                                  VerticalContentAlignment="Center"
                                                  Margin="0,0,6,0"
                                                  KeyDown="FindTextBox_KeyDown"/>
+                                                 PreviewMouseLeftButtonDown="MainTextBox_PreviewMouseLeftButtonDown"
+                                                 PreviewMouseMove="MainTextBox_PreviewMouseMove"
+                                                 PreviewMouseLeftButtonUp="MainTextBox_PreviewMouseLeftButtonUp"
                                         <TextBlock x:Name="ReplaceLabel"
                                                    Text="바꾸기:"
                                                    VerticalAlignment="Center"

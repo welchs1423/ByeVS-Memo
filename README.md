@@ -13,7 +13,11 @@ A lightweight Windows desktop toy project built with only VS Code and the .NET S
 
 ### [2026-04-10]
 
-- **Timestamp Insert (F5)**: Pressing `F5` inserts the current date and time as ` [yyyy-MM-dd HH:mm] ` at the caret position in the editor. Implemented via a `RoutedCommand` (`InsertTimestampCommand`) bound to `F5` through `Window.InputBindings` and `Window.CommandBindings`. Uses `String.Insert` to splice the timestamp into the existing text without overwriting any content; the caret is advanced to the character immediately after the inserted string.
+- **창틀 없는 포스트잇(스티키 노트) 모드 추가 (F12/버튼)**: F12 또는 상단 패널의 "🗒️ 포스트잇" 버튼을 누르면 창틀(WindowStyle)이 사라지고, TopPanel/StatusBar가 숨겨지며, 창 크기가 300x300으로 작아집니다. MainTextBox의 아무 곳이나 드래그하면 창 전체가 이동합니다. 다시 F12 또는 버튼을 누르면 원래 상태로 복구됩니다. 몰입 모드(F11)와 독립적으로 동작합니다.
+
+### [2026-04-10]
+
+- **Timestamp Insert (F5)**: Pressing `F5` inserts the current date and time as `[yyyy-MM-dd HH:mm]` at the caret position in the editor. Implemented via a `RoutedCommand` (`InsertTimestampCommand`) bound to `F5` through `Window.InputBindings` and `Window.CommandBindings`. Uses `String.Insert` to splice the timestamp into the existing text without overwriting any content; the caret is advanced to the character immediately after the inserted string.
 
 - **Print (Ctrl+P)**: Added print support via `ApplicationCommands.Print` binding. Invokes `PrintDialog` and renders the current text into a `FlowDocument` fitted to the printer's printable area (50 px padding). Wrapped in `try-catch` to gracefully handle printer errors without crashing the app.
 - **Document Statistics**: Added a `통계` button to the top panel. Clicking it displays a `MessageBox` with three metrics: total word count (split on whitespace/tab/newline), UTF-8 byte size (1 byte per ASCII char, 3 bytes per Korean character), and logical line count.

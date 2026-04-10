@@ -148,28 +148,138 @@ namespace ByeVS_Memo
                 "문서 통계",
                 MessageBoxButton.OK,
                 MessageBoxImage.Information);
+
+                        // 포스트잇 모드 상태
+                        public static readonly RoutedCommand ToggleStickyNoteModeCommand = new RoutedCommand();
+                        private bool _isStickyNoteMode = false;
+                        private WindowStyle _prevStickyWindowStyle;
+                        private ResizeMode _prevStickyResizeMode;
+                        private double _prevStickyWidth;
+                        private double _prevStickyHeight;
+                        private double _prevStickyLeft;
+                        private double _prevStickyTop;
+                        private Visibility _prevTopPanelVisibility;
+                        private Visibility _prevStatusBarVisibility;
+
+                        // MainTextBox 드래그 이동용
+                        private bool _isDraggingSticky = false;
+                        private Point _dragStartPoint;
         }
 
         // [열기] Ctrl+O
         private void OpenCommand_Executed(object sender, ExecutedRoutedEventArgs e)
         {
+
+                            CommandBindings.Add(new CommandBinding(ToggleStickyNoteModeCommand, ToggleStickyNoteModeCommand_Executed));
             OpenButton_Click(sender, e);
         }
 
         // [저장] Ctrl+S
         private void SaveCommand_Executed(object sender, ExecutedRoutedEventArgs e)
-        {
-            SaveButton_Click(sender, e);
+                            if (e.Key == Key.F11)
+                            {
+                                ToggleFocusMode();
+                                e.Handled = true;
+                            }
+                            else if (e.Key == Key.F12)
+                            {
+                                ToggleStickyNoteMode();
+                                e.Handled = true;
+                            }
+                            else if (e.Key == Key.Escape && _isFocusMode)
+                            {
+                                ToggleFocusMode();
+                                e.Handled = true;
+                            }
         }
 
-        // [자동 줄바꿈] 체크박스 토글
-        private void WordWrapCheckBox_Changed(object sender, RoutedEventArgs e)
-        {
-            MainTextBox.TextWrapping = WordWrapCheckBox.IsChecked == true
-                ? TextWrapping.Wrap
-                : TextWrapping.NoWrap;
-        }
+                        // 포스트잇 모드 토글 (F12/버튼)
+                        private void ToggleStickyNoteModeCommand_Executed(object sender, ExecutedRoutedEventArgs e)
+                        {
+                            ToggleStickyNoteMode();
+                        }
 
+                        private void StickyNoteButton_Click(object sender, RoutedEventArgs e)
+                        {
+                            ToggleStickyNoteMode();
+                        }
+
+                        private void ToggleStickyNoteMode()
+                        {
+                            if (_isStickyNoteMode)
+                            {
+                                // 복구
+                                WindowStyle = _prevStickyWindowStyle;
+                                ResizeMode = _prevStickyResizeMode;
+                                Width = _prevStickyWidth;
+                                Height = _prevStickyHeight;
+                                Left = _prevStickyLeft;
+                                Top = _prevStickyTop;
+                                TopPanelContainer.Visibility = _prevTopPanelVisibility;
+                                MainStatusBar.Visibility = _prevStatusBarVisibility;
+                                StickyNoteButton.Content = "🗒️ 포스트잇";
+                                MainTextBox.Cursor = Cursors.IBeam;
+                                _isStickyNoteMode = false;
+                            }
+                            else
+                            {
+                                // 현재 상태 저장
+                                _prevStickyWindowStyle = WindowStyle;
+                                _prevStickyResizeMode = ResizeMode;
+                                _prevStickyWidth = Width;
+                                _prevStickyHeight = Height;
+                                _prevStickyLeft = Left;
+                                _prevStickyTop = Top;
+                                _prevTopPanelVisibility = TopPanelContainer.Visibility;
+                                _prevStatusBarVisibility = MainStatusBar.Visibility;
+
+                                // 포스트잇 모드 적용
+                                WindowStyle = WindowStyle.None;
+                                ResizeMode = ResizeMode.NoResize;
+                                Width = 300;
+                                Height = 300;
+                                // 화면 중앙 배치
+                                Left = (SystemParameters.WorkArea.Width - 300) / 2 + SystemParameters.WorkArea.Left;
+                                Top = (SystemParameters.WorkArea.Height - 300) / 2 + SystemParameters.WorkArea.Top;
+                                TopPanelContainer.Visibility = Visibility.Collapsed;
+                                MainStatusBar.Visibility = Visibility.Collapsed;
+                                StickyNoteButton.Content = "🗒️ 일반모드";
+                                MainTextBox.Cursor = Cursors.SizeAll;
+                                _isStickyNoteMode = true;
+                            }
+                        }
+
+                        // MainTextBox 드래그로 창 이동
+                        private void MainTextBox_PreviewMouseLeftButtonDown(object sender, MouseButtonEventArgs e)
+                        {
+                            if (_isStickyNoteMode && e.ButtonState == MouseButtonState.Pressed)
+                            {
+                                _isDraggingSticky = true;
+                                _dragStartPoint = e.GetPosition(this);
+                                MainTextBox.CaptureMouse();
+                            }
+                        }
+
+                        private void MainTextBox_PreviewMouseMove(object sender, MouseEventArgs e)
+                        {
+                            if (_isStickyNoteMode && _isDraggingSticky && e.LeftButton == MouseButtonState.Pressed)
+                            {
+                                try
+                                {
+                                    DragMove();
+                                }
+                                catch { }
+                            }
+                        }
+
+                        private void MainTextBox_PreviewMouseLeftButtonUp(object sender, MouseButtonEventArgs e)
+                        {
+                            if (_isStickyNoteMode)
+                            {
+                                _isDraggingSticky = false;
+                                MainTextBox.ReleaseMouseCapture();
+                            }
+                        }
         // [폰트 크기] Ctrl + 마우스 휠
         private void MainTextBox_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
         {
