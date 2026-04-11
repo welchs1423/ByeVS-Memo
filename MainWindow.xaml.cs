@@ -49,6 +49,10 @@ namespace ByeVS_Memo
         private bool _isMarkdownPreviewMode = false;
         private DispatcherTimer? _markdownUpdateTimer;
 
+        // ── 문서 개요 패널 관련 필드 ─────────────────────────────────
+        private bool _isOutlinePanelVisible = false;
+        private bool _updatingOutline = false;
+
         // ── 생성자 ───────────────────────────────────────────────────
         public MainWindow()
         {
@@ -275,6 +279,7 @@ namespace ByeVS_Memo
 
             ApplySearchPanelTheme(isDarkMode);
             ApplyLineNumberTheme(isDarkMode);
+            ApplyOutlineTheme(isDarkMode);
             if (_isMarkdownPreviewMode) UpdateMarkdownPreview();
             File.WriteAllText("theme_setting.txt", isDarkMode ? "Dark" : "Light");
         }
@@ -553,6 +558,7 @@ namespace ByeVS_Memo
                 _markdownUpdateTimer.Stop();
                 _markdownUpdateTimer.Start();
             }
+            if (_isOutlinePanelVisible) UpdateOutlinePanel();
         }
 
         private void UpdateCursorPosition()
@@ -889,6 +895,114 @@ namespace ByeVS_Memo
 </head><body>{html}</body></html>";
 
             MarkdownPreviewBrowser.NavigateToString(fullHtml);
+        }
+
+        // ── [개요] 토글 버튼 ─────────────────────────────────────────
+        private void OutlineButton_Click(object sender, RoutedEventArgs e)
+        {
+            ToggleOutlinePanel();
+        }
+
+        private void ToggleOutlinePanel()
+        {
+            _isOutlinePanelVisible = !_isOutlinePanelVisible;
+            OutlineButton.IsChecked = _isOutlinePanelVisible;
+
+            if (_isOutlinePanelVisible)
+            {
+                OutlineSplitterColumn.Width = new GridLength(4);
+                OutlineColumn.Width = new GridLength(200);
+                OutlineSplitter.Visibility = Visibility.Visible;
+                OutlinePanelBorder.Visibility = Visibility.Visible;
+                ApplyOutlineTheme(isDarkMode);
+                UpdateOutlinePanel();
+            }
+            else
+            {
+                OutlineSplitterColumn.Width = new GridLength(0);
+                OutlineColumn.Width = new GridLength(0);
+                OutlineSplitter.Visibility = Visibility.Collapsed;
+                OutlinePanelBorder.Visibility = Visibility.Collapsed;
+            }
+        }
+
+        private void UpdateOutlinePanel()
+        {
+            _updatingOutline = true;
+            OutlineListBox.Items.Clear();
+
+            string text = MainTextBox.Text;
+            string[] lines = text.Split('\n');
+            int charIndex = 0;
+
+            for (int i = 0; i < lines.Length; i++)
+            {
+                string line = lines[i];
+                string trimmed = line.TrimEnd('\r');
+
+                if (trimmed.StartsWith("#"))
+                {
+                    int level = 0;
+                    while (level < trimmed.Length && trimmed[level] == '#') level++;
+
+                    if (level < trimmed.Length && trimmed[level] == ' ')
+                    {
+                        string headerText = trimmed.Substring(level + 1);
+                        string indent = new string(' ', (level - 1) * 3);
+
+                        var item = new ListBoxItem
+                        {
+                            Content = indent + headerText,
+                            Tag = charIndex,
+                            Padding = new Thickness(4, 2, 4, 2),
+                            FontWeight = level == 1 ? FontWeights.Bold : FontWeights.Normal,
+                            FontSize = level == 1 ? 13 : (level == 2 ? 12 : 11),
+                            ToolTip = trimmed
+                        };
+                        OutlineListBox.Items.Add(item);
+                    }
+                }
+
+                charIndex += line.Length + 1; // +1 for \n
+            }
+
+            _updatingOutline = false;
+        }
+
+        private void OutlineListBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_updatingOutline) return;
+            if (OutlineListBox.SelectedItem is not ListBoxItem item) return;
+            if (item.Tag is not int charIdx) return;
+
+            charIdx = Math.Min(charIdx, MainTextBox.Text.Length);
+            MainTextBox.CaretIndex = charIdx;
+            int lineIdx = MainTextBox.GetLineIndexFromCharacterIndex(charIdx);
+            if (lineIdx >= 0) MainTextBox.ScrollToLine(lineIdx);
+            MainTextBox.Focus();
+
+            // 같은 항목을 다시 클릭할 수 있도록 선택 해제
+            OutlineListBox.SelectedItem = null;
+        }
+
+        // ── 테마: 개요 패널 ──────────────────────────────────────────
+        private void ApplyOutlineTheme(bool dark)
+        {
+            OutlinePanelBorder.Background = dark
+                ? new SolidColorBrush(Color.FromRgb(37, 37, 38))
+                : new SolidColorBrush(Color.FromRgb(240, 240, 240));
+            OutlinePanelTitle.Foreground = dark
+                ? new SolidColorBrush(Colors.White)
+                : new SolidColorBrush(Colors.Black);
+            OutlineListBox.Background = dark
+                ? new SolidColorBrush(Color.FromRgb(45, 45, 48))
+                : new SolidColorBrush(Colors.White);
+            OutlineListBox.Foreground = dark
+                ? new SolidColorBrush(Colors.White)
+                : new SolidColorBrush(Colors.Black);
+            OutlineSplitter.Background = dark
+                ? new SolidColorBrush(Color.FromRgb(60, 60, 60))
+                : new SolidColorBrush(Color.FromRgb(200, 200, 200));
         }
     }
 }

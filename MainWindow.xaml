@@ -119,6 +119,13 @@
                                              Width="95"
                                              Height="25"
                                              ToolTip="마크다운 미리보기 토글 (F8)"/>
+                                <ToggleButton x:Name="OutlineButton"
+                                             Content="개요"
+                                             Click="OutlineButton_Click"
+                                             Margin="0,0,5,5"
+                                             Width="60"
+                                             Height="25"
+                                             ToolTip="문서 개요 패널 토글"/>
                         </StackPanel>
                 </Grid>
 
@@ -191,12 +198,14 @@
                                 </StackPanel>
                         </Border>
 
-                        <!-- 에디터 + 미리보기 분할 레이아웃 -->
+                        <!-- 에디터 + 미리보기 + 개요 분할 레이아웃 -->
                         <Grid Grid.Row="1">
                                 <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*"/>
                                         <ColumnDefinition x:Name="SplitterColumn" Width="0"/>
                                         <ColumnDefinition x:Name="PreviewColumn" Width="0"/>
+                                        <ColumnDefinition x:Name="OutlineSplitterColumn" Width="0"/>
+                                        <ColumnDefinition x:Name="OutlineColumn" Width="0"/>
                                 </Grid.ColumnDefinitions>
 
                                 <!-- Col 0: 줄 번호 + 텍스트 에디터 -->
@@ -262,6 +271,40 @@
                                 <WebBrowser x:Name="MarkdownPreviewBrowser"
                                             Grid.Column="2"
                                             Visibility="Collapsed"/>
+
+                                <!-- Col 3: 개요 패널 분할선 -->
+                                <GridSplitter x:Name="OutlineSplitter"
+                                              Grid.Column="3"
+                                              Width="4"
+                                              HorizontalAlignment="Stretch"
+                                              Background="#CCCCCC"
+                                              Visibility="Collapsed"/>
+
+                                <!-- Col 4: 문서 개요 패널 -->
+                                <Border x:Name="OutlinePanelBorder"
+                                        Grid.Column="4"
+                                        Visibility="Collapsed"
+                                        Background="#F0F0F0"
+                                        BorderThickness="0">
+                                        <Grid>
+                                                <Grid.RowDefinitions>
+                                                        <RowDefinition Height="Auto"/>
+                                                        <RowDefinition Height="*"/>
+                                                </Grid.RowDefinitions>
+                                                <TextBlock x:Name="OutlinePanelTitle"
+                                                           Grid.Row="0"
+                                                           Text="문서 개요"
+                                                           FontWeight="SemiBold"
+                                                           FontSize="12"
+                                                           Padding="8,6,8,4"/>
+                                                <ListBox x:Name="OutlineListBox"
+                                                         Grid.Row="1"
+                                                         BorderThickness="0"
+                                                         Background="Transparent"
+                                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                         SelectionChanged="OutlineListBox_SelectionChanged"/>
+                                        </Grid>
+                                </Border>
                         </Grid>
                 </Grid>
 
