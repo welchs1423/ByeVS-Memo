@@ -9,6 +9,8 @@
         <Window.InputBindings>
                 <KeyBinding Key="F5"
                                 Command="{x:Static local:MainWindow.InsertTimestampCommand}"/>
+                <KeyBinding Key="F8"
+                                Command="{x:Static local:MainWindow.ToggleMarkdownPreviewCommand}"/>
                 <KeyBinding Key="F12"
                                 Command="{x:Static local:MainWindow.ToggleStickyNoteModeCommand}"/>
         </Window.InputBindings>
@@ -25,6 +27,8 @@
                                 Executed="InsertTimestampCommand_Executed"/>
                 <CommandBinding Command="{x:Static local:MainWindow.ToggleStickyNoteModeCommand}"
                                 Executed="ToggleStickyNoteModeCommand_Executed"/>
+                <CommandBinding Command="{x:Static local:MainWindow.ToggleMarkdownPreviewCommand}"
+                                Executed="ToggleMarkdownPreviewCommand_Executed"/>
         </Window.CommandBindings>
         <Grid x:Name="MainGrid">
                 <Grid.RowDefinitions>
@@ -108,6 +112,13 @@
                                         Width="80"
                                         Height="25"
                                         ToolTip="포스트잇 모드 전환 (F12)"/>
+                                <ToggleButton x:Name="MdPreviewButton"
+                                             Content="MD 미리보기"
+                                             Click="MdPreviewButton_Click"
+                                             Margin="0,0,5,5"
+                                             Width="95"
+                                             Height="25"
+                                             ToolTip="마크다운 미리보기 토글 (F8)"/>
                         </StackPanel>
                 </Grid>
 
@@ -137,9 +148,6 @@
                                                  VerticalContentAlignment="Center"
                                                  Margin="0,0,6,0"
                                                  KeyDown="FindTextBox_KeyDown"/>
-                                                 PreviewMouseLeftButtonDown="MainTextBox_PreviewMouseLeftButtonDown"
-                                                 PreviewMouseMove="MainTextBox_PreviewMouseMove"
-                                                 PreviewMouseLeftButtonUp="MainTextBox_PreviewMouseLeftButtonUp"
                                         <TextBlock x:Name="ReplaceLabel"
                                                    Text="바꾸기:"
                                                    VerticalAlignment="Center"
@@ -183,50 +191,76 @@
                                 </StackPanel>
                         </Border>
 
+                        <!-- 에디터 + 미리보기 분할 레이아웃 -->
                         <Grid Grid.Row="1">
                                 <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="45"/>
                                         <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition x:Name="SplitterColumn" Width="0"/>
+                                        <ColumnDefinition x:Name="PreviewColumn" Width="0"/>
                                 </Grid.ColumnDefinitions>
-                                <Border x:Name="LineNumberBorder"
-                                        Grid.Column="0"
-                                        Background="#E8E8E8">
-                                    <ScrollViewer x:Name="LineNumberScroller"
-                                                  VerticalScrollBarVisibility="Hidden"
-                                                  HorizontalScrollBarVisibility="Hidden"
-                                                  IsHitTestVisible="False"
-                                                  Focusable="False">
-                                        <TextBlock x:Name="LineNumbersText"
-                                                   Text="1"
-                                                   FontSize="15"
-                                                   TextAlignment="Right"
-                                                   Padding="0,10,6,10"
-                                                   Foreground="#777777"/>
-                                    </ScrollViewer>
-                                </Border>
-                                <TextBox x:Name="MainTextBox"
-                                         Grid.Column="1"
-                                         AcceptsReturn="True"
-                                         AcceptsTab="True"
-                                         VerticalScrollBarVisibility="Auto"
-                                         FontSize="15"
-                                         Padding="10"
-                                         BorderThickness="0"
-                                         AllowDrop="True"
-                                         PreviewDragOver="MainTextBox_PreviewDragOver"
-                                         Drop="MainTextBox_Drop"
-                                         PreviewMouseWheel="MainTextBox_PreviewMouseWheel"
-                                         SelectionChanged="MainTextBox_SelectionChanged"
-                                         TextChanged="MainTextBox_TextChanged"
-                                         ScrollViewer.ScrollChanged="MainTextBox_ScrollChanged">
-                                    <TextBox.ContextMenu>
-                                        <ContextMenu>
-                                            <MenuItem Header="대문자로 변환 (UPPERCASE)" Click="MenuItem_Uppercase_Click"/>
-                                            <MenuItem Header="소문자로 변환 (lowercase)" Click="MenuItem_Lowercase_Click"/>
-                                            <MenuItem Header="빈 줄 모두 제거 (Remove Empty Lines)" Click="MenuItem_RemoveEmptyLines_Click"/>
-                                        </ContextMenu>
-                                    </TextBox.ContextMenu>
-                                </TextBox>
+
+                                <!-- Col 0: 줄 번호 + 텍스트 에디터 -->
+                                <Grid Grid.Column="0">
+                                        <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="45"/>
+                                                <ColumnDefinition Width="*"/>
+                                        </Grid.ColumnDefinitions>
+                                        <Border x:Name="LineNumberBorder"
+                                                Grid.Column="0"
+                                                Background="#E8E8E8">
+                                            <ScrollViewer x:Name="LineNumberScroller"
+                                                          VerticalScrollBarVisibility="Hidden"
+                                                          HorizontalScrollBarVisibility="Hidden"
+                                                          IsHitTestVisible="False"
+                                                          Focusable="False">
+                                                <TextBlock x:Name="LineNumbersText"
+                                                           Text="1"
+                                                           FontSize="15"
+                                                           TextAlignment="Right"
+                                                           Padding="0,10,6,10"
+                                                           Foreground="#777777"/>
+                                            </ScrollViewer>
+                                        </Border>
+                                        <TextBox x:Name="MainTextBox"
+                                                 Grid.Column="1"
+                                                 AcceptsReturn="True"
+                                                 AcceptsTab="True"
+                                                 VerticalScrollBarVisibility="Auto"
+                                                 FontSize="15"
+                                                 Padding="10"
+                                                 BorderThickness="0"
+                                                 AllowDrop="True"
+                                                 PreviewDragOver="MainTextBox_PreviewDragOver"
+                                                 Drop="MainTextBox_Drop"
+                                                 PreviewMouseWheel="MainTextBox_PreviewMouseWheel"
+                                                 PreviewMouseLeftButtonDown="MainTextBox_PreviewMouseLeftButtonDown"
+                                                 PreviewMouseMove="MainTextBox_PreviewMouseMove"
+                                                 PreviewMouseLeftButtonUp="MainTextBox_PreviewMouseLeftButtonUp"
+                                                 SelectionChanged="MainTextBox_SelectionChanged"
+                                                 TextChanged="MainTextBox_TextChanged"
+                                                 ScrollViewer.ScrollChanged="MainTextBox_ScrollChanged">
+                                            <TextBox.ContextMenu>
+                                                <ContextMenu>
+                                                    <MenuItem Header="대문자로 변환 (UPPERCASE)" Click="MenuItem_Uppercase_Click"/>
+                                                    <MenuItem Header="소문자로 변환 (lowercase)" Click="MenuItem_Lowercase_Click"/>
+                                                    <MenuItem Header="빈 줄 모두 제거 (Remove Empty Lines)" Click="MenuItem_RemoveEmptyLines_Click"/>
+                                                </ContextMenu>
+                                            </TextBox.ContextMenu>
+                                        </TextBox>
+                                </Grid>
+
+                                <!-- Col 1: 분할선 -->
+                                <GridSplitter x:Name="PreviewSplitter"
+                                              Grid.Column="1"
+                                              Width="4"
+                                              HorizontalAlignment="Stretch"
+                                              Background="#CCCCCC"
+                                              Visibility="Collapsed"/>
+
+                                <!-- Col 2: 마크다운 미리보기 -->
+                                <WebBrowser x:Name="MarkdownPreviewBrowser"
+                                            Grid.Column="2"
+                                            Visibility="Collapsed"/>
                         </Grid>
                 </Grid>
 
