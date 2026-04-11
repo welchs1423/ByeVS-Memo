@@ -53,6 +53,20 @@ namespace ByeVS_Memo
         private bool _isOutlinePanelVisible = false;
         private bool _updatingOutline = false;
 
+        // ── 타격감(Window Shake) 모드 관련 필드 ──────────────────────
+        private bool _isShakeMode = false;
+        private readonly System.Collections.Generic.Queue<DateTime> _typingTimestamps = new();
+        private bool _isShaking = false;
+        private DispatcherTimer? _shakeTimer;
+        private int _shakeStep = 0;
+        private double _shakeOriginalLeft;
+        private static readonly double[] _shakeOffsets = { -4, 4, -4, 4, -3, 3, -2, 2, -1, 1, 0 };
+
+        // ── 해커(매트릭스) 모드 관련 필드 ────────────────────────────
+        private bool _isHackerMode = false;
+        private System.Windows.Media.FontFamily? _savedFontFamily;
+        private double _savedFontSize;
+
         // ── 생성자 ───────────────────────────────────────────────────
         public MainWindow()
         {
@@ -247,12 +261,18 @@ namespace ByeVS_Memo
         private void ThemeButton_Click(object sender, RoutedEventArgs e)
         {
             isDarkMode = !isDarkMode;
+            ApplyCurrentTheme();
+            File.WriteAllText("theme_setting.txt", isDarkMode ? "Dark" : "Light");
+        }
 
+        private void ApplyCurrentTheme()
+        {
             if (isDarkMode)
             {
                 MainGrid.Background = new SolidColorBrush(Color.FromRgb(30, 30, 30));
                 MainTextBox.Background = new SolidColorBrush(Color.FromRgb(45, 45, 48));
                 MainTextBox.Foreground = new SolidColorBrush(Colors.White);
+                MainTextBox.CaretBrush = new SolidColorBrush(Colors.White);
                 TopPanel.Background = new SolidColorBrush(Color.FromRgb(45, 45, 48));
                 MainMenu.Background = new SolidColorBrush(Color.FromRgb(45, 45, 48));
                 MainMenu.Foreground = new SolidColorBrush(Colors.White);
@@ -267,6 +287,7 @@ namespace ByeVS_Memo
                 MainGrid.Background = new SolidColorBrush(Colors.White);
                 MainTextBox.Background = new SolidColorBrush(Colors.White);
                 MainTextBox.Foreground = new SolidColorBrush(Colors.Black);
+                MainTextBox.CaretBrush = new SolidColorBrush(Colors.Black);
                 TopPanel.Background = new SolidColorBrush(Color.FromRgb(240, 240, 240));
                 MainMenu.Background = new SolidColorBrush(Color.FromRgb(240, 240, 240));
                 MainMenu.Foreground = new SolidColorBrush(Colors.Black);
@@ -281,7 +302,6 @@ namespace ByeVS_Memo
             ApplyLineNumberTheme(isDarkMode);
             ApplyOutlineTheme(isDarkMode);
             if (_isMarkdownPreviewMode) UpdateMarkdownPreview();
-            File.WriteAllText("theme_setting.txt", isDarkMode ? "Dark" : "Light");
         }
 
         // ── 투명도 슬라이더 ──────────────────────────────────────────
@@ -336,6 +356,7 @@ namespace ByeVS_Memo
             _clockTimer.Stop();
             _autoSaveTimer.Stop();
             _markdownUpdateTimer?.Stop();
+            _shakeTimer?.Stop();
             _notifyIcon.Dispose();
             base.OnClosed(e);
         }
@@ -559,6 +580,7 @@ namespace ByeVS_Memo
                 _markdownUpdateTimer.Start();
             }
             if (_isOutlinePanelVisible) UpdateOutlinePanel();
+            TriggerShakeIfNeeded();
         }
 
         private void UpdateCursorPosition()
@@ -635,6 +657,16 @@ namespace ByeVS_Memo
             {
                 snippet = "/sign";
                 expansion = $"- 작성자: {Environment.UserName} -";
+            }
+            else if (textBefore.EndsWith("/시험"))
+            {
+                snippet = "/시험";
+                expansion = "[D-7] 정보처리기사 실기 부숴버리자! (4/18)";
+            }
+            else if (textBefore.EndsWith("/전장"))
+            {
+                snippet = "/전장";
+                expansion = "📝 메모 멈춰! 지금 당장 하스스톤 전장 한 판 돌리고 올 시간입니다.";
             }
 
             if (snippet == null) return;
@@ -1003,6 +1035,110 @@ namespace ByeVS_Memo
             OutlineSplitter.Background = dark
                 ? new SolidColorBrush(Color.FromRgb(60, 60, 60))
                 : new SolidColorBrush(Color.FromRgb(200, 200, 200));
+        }
+
+        // ── [타격감 모드] 토글 ────────────────────────────────────────
+        private void ShakeModeButton_Click(object sender, RoutedEventArgs e)
+        {
+            _isShakeMode = ShakeModeButton.IsChecked == true;
+            if (!_isShakeMode) _typingTimestamps.Clear();
+        }
+
+        private void TriggerShakeIfNeeded()
+        {
+            if (!_isShakeMode || _isShaking) return;
+
+            var now = DateTime.Now;
+            _typingTimestamps.Enqueue(now);
+
+            // 1초보다 오래된 타임스탬프 제거
+            while (_typingTimestamps.Count > 0 &&
+                   (now - _typingTimestamps.Peek()).TotalSeconds > 1)
+                _typingTimestamps.Dequeue();
+
+            if (_typingTimestamps.Count >= 5)
+            {
+                _typingTimestamps.Clear();
+                StartWindowShake();
+            }
+        }
+
+        private void StartWindowShake()
+        {
+            _isShaking = true;
+            _shakeOriginalLeft = Left;
+            _shakeStep = 0;
+
+            _shakeTimer = new DispatcherTimer { Interval = TimeSpan.FromMilliseconds(28) };
+            _shakeTimer.Tick += ShakeTimer_Tick;
+            _shakeTimer.Start();
+        }
+
+        private void ShakeTimer_Tick(object? sender, EventArgs e)
+        {
+            if (_shakeStep < _shakeOffsets.Length)
+            {
+                Left = _shakeOriginalLeft + _shakeOffsets[_shakeStep];
+                _shakeStep++;
+            }
+            else
+            {
+                Left = _shakeOriginalLeft;
+                _shakeTimer?.Stop();
+                _isShaking = false;
+            }
+        }
+
+        // ── [해커 모드] 토글 ──────────────────────────────────────────
+        private void HackerModeButton_Click(object sender, RoutedEventArgs e)
+        {
+            _isHackerMode = HackerModeButton.IsChecked == true;
+
+            if (_isHackerMode)
+            {
+                _savedFontFamily = MainTextBox.FontFamily;
+                _savedFontSize = MainTextBox.FontSize;
+
+                var black = new SolidColorBrush(Color.FromRgb(0, 0, 0));
+                var neonGreen = new SolidColorBrush(Color.FromRgb(0, 255, 65));
+                var dimGreen = new SolidColorBrush(Color.FromRgb(0, 160, 35));
+                var darkGreen = new SolidColorBrush(Color.FromRgb(0, 20, 0));
+
+                MainGrid.Background = black;
+                MainTextBox.Background = black;
+                MainTextBox.Foreground = neonGreen;
+                MainTextBox.CaretBrush = neonGreen;
+                MainTextBox.FontFamily = new System.Windows.Media.FontFamily("Consolas");
+                TopPanel.Background = black;
+                MainMenu.Background = black;
+                MainMenu.Foreground = neonGreen;
+                MainStatusBar.Background = black;
+                CursorPosText.Foreground = neonGreen;
+                CharCountText.Foreground = neonGreen;
+                ClockText.Foreground = neonGreen;
+                LineNumberBorder.Background = darkGreen;
+                LineNumbersText.Foreground = dimGreen;
+                SearchPanel.Background = black;
+                SearchPanel.BorderBrush = dimGreen;
+                FindLabel.Foreground = neonGreen;
+                ReplaceLabel.Foreground = neonGreen;
+                SearchStatusText.Foreground = dimGreen;
+                FindTextBox.Background = black;
+                FindTextBox.Foreground = neonGreen;
+                FindTextBox.CaretBrush = neonGreen;
+                ReplaceTextBox.Background = black;
+                ReplaceTextBox.Foreground = neonGreen;
+                ReplaceTextBox.CaretBrush = neonGreen;
+
+                HackerModeButton.Content = "🔴 일반 모드";
+            }
+            else
+            {
+                MainTextBox.FontFamily = _savedFontFamily ?? new System.Windows.Media.FontFamily("Segoe UI");
+                MainTextBox.FontSize = _savedFontSize > 0 ? _savedFontSize : 15;
+                ApplyCurrentTheme();
+                HackerModeButton.Content = "🟩 해커 모드";
+            }
         }
     }
 }

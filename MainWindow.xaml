@@ -126,6 +126,22 @@
                                              Width="60"
                                              Height="25"
                                              ToolTip="문서 개요 패널 토글"/>
+                                <Separator Margin="8,4,8,4"
+                                           Width="1"/>
+                                <ToggleButton x:Name="ShakeModeButton"
+                                             Content="⌨️ 타격감"
+                                             Click="ShakeModeButton_Click"
+                                             Margin="0,0,5,5"
+                                             Width="80"
+                                             Height="25"
+                                             ToolTip="타격감 모드: 빠른 타이핑 시 창이 흔들립니다"/>
+                                <ToggleButton x:Name="HackerModeButton"
+                                             Content="🟩 해커 모드"
+                                             Click="HackerModeButton_Click"
+                                             Margin="0,0,5,5"
+                                             Width="90"
+                                             Height="25"
+                                             ToolTip="해커(매트릭스) 테마 적용"/>
                         </StackPanel>
                 </Grid>
 
