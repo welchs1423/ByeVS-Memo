@@ -604,6 +604,42 @@ namespace ByeVS_Memo
             await Task.Run(() => File.WriteAllText(path, content));
         }
 
+        // ── 스마트 상용구 (Text Snippets) ───────────────────────────
+        private void MainTextBox_PreviewKeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.Key != Key.Space) return;
+
+            int caret = MainTextBox.CaretIndex;
+            string textBefore = MainTextBox.Text.Substring(0, caret);
+
+            string? snippet = null;
+            string? expansion = null;
+
+            if (textBefore.EndsWith("/date"))
+            {
+                snippet = "/date";
+                expansion = DateTime.Now.ToString("yyyy-MM-dd HH:mm");
+            }
+            else if (textBefore.EndsWith("/todo"))
+            {
+                snippet = "/todo";
+                expansion = "[ ] ";
+            }
+            else if (textBefore.EndsWith("/sign"))
+            {
+                snippet = "/sign";
+                expansion = $"- 작성자: {Environment.UserName} -";
+            }
+
+            if (snippet == null) return;
+
+            int snippetStart = caret - snippet.Length;
+            string newText = MainTextBox.Text.Remove(snippetStart, snippet.Length).Insert(snippetStart, expansion!);
+            MainTextBox.Text = newText;
+            MainTextBox.CaretIndex = snippetStart + expansion!.Length;
+            e.Handled = true;
+        }
+
         // ── 테마: 줄 번호 영역 ───────────────────────────────────────
         private void ApplyLineNumberTheme(bool dark)
         {

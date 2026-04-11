@@ -236,6 +236,7 @@
                                                  PreviewMouseLeftButtonDown="MainTextBox_PreviewMouseLeftButtonDown"
                                                  PreviewMouseMove="MainTextBox_PreviewMouseMove"
                                                  PreviewMouseLeftButtonUp="MainTextBox_PreviewMouseLeftButtonUp"
+                                                 PreviewKeyDown="MainTextBox_PreviewKeyDown"
                                                  SelectionChanged="MainTextBox_SelectionChanged"
                                                  TextChanged="MainTextBox_TextChanged"
                                                  ScrollViewer.ScrollChanged="MainTextBox_ScrollChanged">
