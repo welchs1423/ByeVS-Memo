@@ -1,26 +1,122 @@
-# 📝 ByeVS-Memo
+# ByeVS-Memo
 
-**ByeVS-Memo**는 단순한 메모장을 넘어, 개발자와 기획자를 위한 강력한 편의 기능을 제공하는 C# WPF 기반의 텍스트 에디터 프로젝트입니다. AI 에이전트(Claude Code)와의 페어 프로그래밍을 통해 16개의 핵심 모듈을 단기간에 구축한 실험적이고 성공적인 토이 프로젝트입니다.
+> A multi-functional text editor for developers and planners — built entirely with VS Code and the .NET SDK, no Visual Studio required.
 
-## ✨ 주요 기능 (Key Features)
+**ByeVS-Memo** started as a toy project to explore C# WPF fundamentals, and grew into a feature-rich editor through pair programming with an AI agent (Claude Code). 16 core modules were built and shipped in a short period, covering everything from Markdown live preview to easter egg window shake effects.
 
-### 🛠 프로페셔널 에디팅 기능
-* **마크다운(Markdown) 실시간 미리보기:** 작성 중인 마크다운 문서를 실시간으로 HTML로 렌더링
-* **자동 목차 (Document Outline):** 헤더(`#`)를 추적하여 우측 네비게이션 미니맵 제공 및 스크롤 연동
-* **스마트 상용구 (Text Snippets):** `/date`, `/todo`, `/sign` 등 단축어 입력 시 텍스트 자동 완성
-* **텍스트 일괄 포맷팅:** 드래그한 텍스트를 우클릭하여 대/소문자 변환 및 빈 줄 제거
-* **안전 백업 시스템 (History Backup):** 저장 시 `Backups` 폴더에 타임스탬프 사본 자동 생성
+---
 
-### 🎨 UI/UX 편의성
-* **포스트잇 모드 (F12):** 창틀과 상단 패널을 숨기고 화면 어디에나 띄워둘 수 있는 플로팅 노트 지원
-* **다크 모드 지원:** 눈이 편안한 어두운 테마 지원
-* **상태 표시줄 (StatusBar):** 현재 글자 수, 라인 수 실시간 카운팅
+## Features
 
-### 🎮 이스터에그 (Easter Eggs)
-* **타격감 모드 (Window Shake):** 빠른 타이핑 시 에디터 창이 미세하게 흔들리며 타격감 제공
-* **해커 모드 (Matrix Theme):** 검은 배경과 네온 그린 폰트의 해커 스타일 변신
-* **시크릿 맞춤형 상용구:** 특정 단축어 입력 시 숨겨진 메시지 출력
+### Professional Editing
 
-## 💻 Tech Stack
-* **Framework:** .NET / C# WPF
-* **IDE & AI:** Visual Studio Code, GitHub Copilot, Claude Code (Agent)
+| Feature | Shortcut | Description |
+|---|---|---|
+| **Markdown Live Preview** | `F8` | Splits the editor left/right. The right pane renders live HTML via the [Markdig](https://github.com/xoofx/markdig) library (tables, task lists, footnotes, etc.) with a 500 ms debounce. Theme-aware CSS adapts to dark/light mode. |
+| **Document Outline** | Toolbar button | A collapsible 200 px side panel lists all Markdown headings (`#`, `##`, `###`) extracted from the current text. Each entry is indented proportionally to its level. Clicking any entry scrolls the editor to that line. |
+| **Smart Text Snippets** | Space after shorthand | Type a shorthand then press Space to auto-expand: `/date` → current datetime, `/todo` → `[ ] `, `/sign` → `- Author: [username] -`. |
+| **Find & Replace** | `Ctrl+F` / `Ctrl+H` | Collapsible panel with Find Next (case-insensitive, wraps around), Replace, and Replace All. `Enter` triggers the action; `Esc` closes the panel. |
+| **Text Formatting** | Right-click | Context menu on the editor: convert selection to UPPERCASE / lowercase, or remove all empty lines. Operates on selected text only, or the full document if nothing is selected. |
+| **Timestamp Insert** | `F5` | Inserts `[yyyy-MM-dd HH:mm]` at the caret position without overwriting any existing content. |
+| **Drag & Drop** | Drop onto editor | Drop any file onto the editor area to open it. The path is added to the recent files list automatically. |
+| **Print** | `Ctrl+P` | Renders the current text into a `FlowDocument` fitted to the printer's printable area (50 px padding). |
+| **Document Statistics** | Stats button | Displays a popup with word count, UTF-8 byte size, and line count. |
+| **History Backup** | On every save | A timestamped copy (e.g. `filename_20260411_193000.txt`) is automatically written to a `Backups/` folder next to the executable. |
+| **Auto-Save** | Every 1 minute | Silently saves the current text to `autosave_temp.txt` in the application folder via `async Task.Run` to avoid UI freezing. |
+| **Line Numbers** | Always on | A 45 px gutter to the left of the editor, synchronized pixel-for-pixel with the editor's scroll position. Colors adapt to dark/light theme. |
+
+---
+
+### UI / UX
+
+| Feature | Shortcut | Description |
+|---|---|---|
+| **Sticky Note Mode** | `F12` | Removes the window frame, hides the toolbar and status bar, and resizes the window to 300×300. The note floats anywhere on screen and can be dragged by clicking anywhere on the text area. |
+| **Focus Mode** | `F11` | Borderless fullscreen — hides the toolbar and status bar, leaving only the text area. Press `F11` or `Esc` to exit. |
+| **Dark / Light Theme** | Theme button | Full dark mode with persisted preference (`theme_setting.txt`). All panels — toolbar, status bar, gutter, search panel, outline panel, and Markdown preview CSS — adapt in sync. |
+| **Always on Top** | 📌 button | Pins the window above all other windows until toggled off. |
+| **Window Opacity** | Slider | Adjusts window transparency from 20% to 100%, preventing the window from becoming fully invisible. |
+| **Word Wrap** | Checkbox | Toggles `TextWrapping` on the main text area. |
+| **Font Size** | `Ctrl+Wheel` | Scroll with Ctrl held to increase or decrease font size (clamped to 8–72 px). |
+| **Status Bar** | Always on | Displays cursor position (line/column), total character count, and a live HH:mm:ss clock. |
+| **System Tray** | Minimize | Minimizing hides the window from the taskbar and places it in the system tray. Double-click or right-click the tray icon to restore or exit. |
+| **Recent Files** | File menu | Up to 10 recently opened or saved paths are stored in `recent_files.json`. Selecting a deleted entry shows a warning and removes it from the list. |
+
+---
+
+### Easter Eggs
+
+> Three hidden modes that make the editor a little more fun.
+
+- **Window Shake Mode** (`⌨️` button) — When rapid typing is detected, the window shakes left and right with a short animation, simulating the feel of a mechanical keyboard impact.
+- **Hacker Mode** (`🟩` button) — Applies a Matrix-style theme: black background, neon-green monospace font. Toggle off to restore the previous theme.
+- **Secret Snippets** — Two personal shorthand expansions are hidden inside the snippet engine. Type them and press Space to find out what they do.
+
+---
+
+## Keyboard Shortcuts
+
+| Key | Action |
+|---|---|
+| `Ctrl+N` | New document |
+| `Ctrl+O` | Open file |
+| `Ctrl+S` | Save file |
+| `Ctrl+P` | Print |
+| `Ctrl+F` | Find |
+| `Ctrl+H` | Find & Replace |
+| `Ctrl+Wheel` | Adjust font size |
+| `F5` | Insert timestamp |
+| `F8` | Toggle Markdown preview |
+| `F11` | Toggle Focus Mode |
+| `F12` | Toggle Sticky Note Mode |
+| `Esc` | Exit Focus Mode / Close search panel |
+
+---
+
+## Tech Stack
+
+| Category | Details |
+|---|---|
+| **Language** | C# |
+| **Framework** | .NET 8.0, WPF (Windows Presentation Foundation) |
+| **Library** | [Markdig](https://github.com/xoofx/markdig) 0.38.0 — Markdown parsing |
+| **Interop** | `System.Windows.Forms.NotifyIcon` via `UseWindowsForms` (for system tray) |
+| **IDE** | Visual Studio Code (C# Dev Kit), Cursor |
+| **AI Tools** | Claude Code (Agent), GitHub Copilot |
+| **Build Tools** | .NET CLI, Git, GitHub |
+
+No Visual Studio. Built entirely with `dotnet new wpf`, `dotnet run`, and a terminal.
+
+---
+
+## Build & Run
+
+```bash
+# Run in development
+dotnet run
+
+# Build only
+dotnet build
+
+# Publish self-contained executable for Windows x64
+dotnet publish -c Release -r win-x64 --self-contained
+```
+
+---
+
+## Runtime Files
+
+These files are created next to the executable at runtime and are excluded from the repository:
+
+| File / Folder | Purpose |
+|---|---|
+| `theme_setting.txt` | Persisted dark/light preference |
+| `recent_files.json` | Recent file list (up to 10 paths) |
+| `autosave_temp.txt` | Auto-save output (written every 1 minute) |
+| `Backups/` | Timestamped backup copies created on every save |
+
+---
+
+## Project Background
+
+This project was built to understand the fundamentals of C# WPF — event handling, layout systems, commands, timers, and interop — without a heavy IDE. Every feature was designed, coded, and iterated through a real-time conversation with Claude Code, making it an experiment in AI-assisted solo development as much as a useful desktop tool.
