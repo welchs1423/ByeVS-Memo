@@ -7,7 +7,7 @@ A lightweight Windows desktop toy project built using only VS Code and the .NET 
 - **Language**: C#
 - **Framework**: .NET 8.0, WPF (Windows Presentation Foundation)
 - **IDE / Editor**: Visual Studio Code (C# Dev Kit)
-- **Tools**: .NET CLI, Git, GitHub
+- **Tools**: .NET CLI, Git, GitHub, Cursor, Claude, GitHub Copilot
 
 ## 📝 Changelog
 
